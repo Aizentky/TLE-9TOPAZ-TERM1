@@ -34,14 +34,14 @@
         @keyframes fadeInUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
         @keyframes pulse-glow { 0%,100%{box-shadow:0 0 20px rgba(251,191,36,0.15)} 50%{box-shadow:0 0 50px rgba(251,191,36,0.35)} }
         @keyframes rotate-slow { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-        @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+        @keyframes shake { 0%,100%{transform:translateX(0)} 10%,30%,50%,70%,90%{transform:translateX(-6px)} 20%,40%,60%,80%{transform:translateX(6px)} }
 
         .animate-float { animation: float 6s ease-in-out infinite; }
         .animate-float-delay { animation: float-delay 5s ease-in-out 1.5s infinite; }
         .animate-fadeInUp { animation: fadeInUp 0.8s ease-out forwards; }
         .animate-pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
         .animate-rotate-slow { animation: rotate-slow 25s linear infinite; }
-        .animate-shimmer { background: linear-gradient(90deg, transparent, rgba(251,191,36,0.08), transparent); background-size: 200% 100%; animation: shimmer 4s infinite; }
+        .animate-shake { animation: shake 0.5s ease-in-out; }
 
         .stagger-1 { animation-delay: 0.1s; }
         .stagger-2 { animation-delay: 0.2s; }
@@ -89,9 +89,98 @@
         .toast.show { transform: translateX(0); }
 
         .divider-gold { height: 1px; background: linear-gradient(90deg, transparent, rgba(251,191,36,0.3), transparent); }
+
+        /* ===== LOGIN GATE ===== */
+        #loginGate {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: #0D0C12;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+        }
+        #loginGate.unlocked {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        #loginGate input:focus {
+            outline: none;
+            border-color: rgba(251,191,36,0.5);
+            box-shadow: 0 0 0 3px rgba(251,191,36,0.1);
+        }
+        #loginGate input.shake-error {
+            animation: shake 0.5s ease-in-out;
+            border-color: rgba(239,68,68,0.5) !important;
+            box-shadow: 0 0 0 3px rgba(239,68,68,0.1) !important;
+        }
+
+        #mainContent {
+            opacity: 0;
+            transition: opacity 0.8s ease 0.3s;
+        }
+        #mainContent.revealed {
+            opacity: 1;
+        }
     </style>
 </head>
 <body class="min-h-screen overflow-x-hidden">
+
+    <!-- ==================== LOGIN GATE ==================== -->
+    <div id="loginGate">
+        <div class="absolute inset-0">
+            <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl animate-float"></div>
+            <div class="absolute bottom-1/3 right-1/4 w-80 h-80 bg-amber-600/5 rounded-full blur-3xl animate-float-delay"></div>
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] border border-amber-400/5 rounded-full animate-rotate-slow"></div>
+        </div>
+
+        <div class="relative z-10 text-center px-6 w-full max-w-sm">
+            <div class="mb-8">
+                <img src="https://z-cdn-media.chatglm.cn/files/c4d25cf6-95e6-4ffb-855c-5a49be0569e3.jpg?auth_key=1881512784-a706d6f2bbe046d6b8d4e9b4703c53bb-0-3bc2e23740518d82c457efaf7290f646" alt="9-Topaz" class="w-24 h-24 rounded-full object-cover mx-auto mb-5 ring-4 ring-amber-400/30 animate-pulse-glow">
+                <h1 class="font-playfair text-3xl font-bold gold-gradient mb-2">9-TOPAZ</h1>
+                <p class="text-sm text-slate-400">TLE — Commercial Cooking</p>
+            </div>
+
+            <div class="glass rounded-2xl p-8" style="border:1px solid rgba(251,191,36,0.1)">
+                <div class="flex items-center justify-center gap-2 mb-5">
+                    <span class="iconify text-amber-400 text-xl" data-icon="solar:lock-keyhole-bold-duotone"></span>
+                    <h2 class="font-semibold text-white text-lg">Login</h2>
+                </div>
+
+                <div class="mb-4 text-left">
+                    <label class="text-xs text-slate-500 mb-1.5 block">Passcode</label>
+                    <div class="relative">
+                        <input
+                            type="password"
+                            id="passcodeInput"
+                            placeholder="Enter passcode"
+                            autocomplete="off"
+                            class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 transition-all duration-200 pr-10"
+                        >
+                        <button id="toggleVisibility" onclick="togglePasscodeVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-amber-400 transition-colors">
+                            <span class="iconify text-lg" data-icon="solar:eye-bold-duotone"></span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="loginError" class="text-red-400 text-xs mb-3 h-4 transition-opacity opacity-0">
+                    Incorrect passcode. Please try again.
+                </div>
+
+                <button onclick="submitPasscode()" id="loginBtn" class="w-full gold-bg text-black font-semibold py-3 rounded-xl hover:opacity-90 transition-all text-sm flex items-center justify-center gap-2">
+                    <span class="iconify" data-icon="solar:lock-unlocked-bold-duotone"></span>
+                    Enter Website
+                </button>
+            </div>
+
+            <p class="text-[10px] text-slate-700 mt-6">Website Created by Kian V</p>
+        </div>
+    </div>
+
+    <!-- ==================== MAIN CONTENT ==================== -->
+    <div id="mainContent">
 
     <!-- Toast -->
     <div id="toast" class="toast fixed top-24 right-6 z-[100] glass rounded-xl px-5 py-3 flex items-center gap-3 max-w-sm">
@@ -129,7 +218,7 @@
         </div>
     </nav>
 
-    <!-- ==================== HERO ==================== -->
+    <!-- HERO -->
     <section id="home" class="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
         <div class="absolute inset-0">
             <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl animate-float"></div>
@@ -137,7 +226,6 @@
             <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-amber-400/5 rounded-full animate-rotate-slow"></div>
             <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] border border-amber-400/5 rounded-full animate-rotate-slow" style="animation-direction:reverse;animation-duration:18s"></div>
         </div>
-
         <div class="relative z-10 text-center max-w-4xl mx-auto px-6">
             <div class="animate-fadeInUp opacity-0 stagger-1">
                 <div class="inline-flex items-center gap-2 glass rounded-full px-4 py-2 mb-8">
@@ -145,21 +233,12 @@
                     <span class="text-xs text-slate-400 tracking-wider uppercase">Grade 9 — TLE: Commercial Cooking</span>
                 </div>
             </div>
-
             <div class="animate-fadeInUp opacity-0 stagger-2">
                 <img src="https://z-cdn-media.chatglm.cn/files/c4d25cf6-95e6-4ffb-855c-5a49be0569e3.jpg?auth_key=1881512784-a706d6f2bbe046d6b8d4e9b4703c53bb-0-3bc2e23740518d82c457efaf7290f646" alt="9-Topaz" class="w-36 h-36 rounded-full object-cover mx-auto mb-8 ring-4 ring-amber-400/30 animate-pulse-glow">
             </div>
-
-            <h1 class="animate-fadeInUp opacity-0 stagger-3 font-playfair text-5xl md:text-7xl font-bold mb-3 tracking-tight">
-                <span class="gold-gradient">9-TOPAZ</span>
-            </h1>
-            <p class="animate-fadeInUp opacity-0 stagger-3 text-xl md:text-2xl text-slate-300 mb-2 font-light">
-                Commercial Cooking
-            </p>
-            <p class="animate-fadeInUp opacity-0 stagger-4 text-sm text-slate-500 mb-2">
-                Cold & Hot Kitchen • Kitchen Brigade System
-            </p>
-
+            <h1 class="animate-fadeInUp opacity-0 stagger-3 font-playfair text-5xl md:text-7xl font-bold mb-3 tracking-tight"><span class="gold-gradient">9-TOPAZ</span></h1>
+            <p class="animate-fadeInUp opacity-0 stagger-3 text-xl md:text-2xl text-slate-300 mb-2 font-light">Commercial Cooking</p>
+            <p class="animate-fadeInUp opacity-0 stagger-4 text-sm text-slate-500 mb-2">Cold & Hot Kitchen • Kitchen Brigade System</p>
             <div class="animate-fadeInUp opacity-0 stagger-4 flex flex-wrap justify-center gap-4 mb-10">
                 <div class="glass rounded-xl px-4 py-2 flex items-center gap-2">
                     <span class="iconify text-amber-400" data-icon="solar:user-bold-duotone"></span>
@@ -170,200 +249,58 @@
                     <span class="text-xs text-slate-400">Website Created by: <span class="text-cyan-400 font-semibold">Kian V</span></span>
                 </div>
             </div>
-
             <div class="animate-fadeInUp opacity-0 stagger-5 flex flex-wrap justify-center gap-4">
-                <a href="#cold" class="cold-bg text-white font-semibold px-8 py-3 rounded-xl hover:opacity-90 transition-all hover:shadow-lg hover:shadow-blue-500/20 flex items-center gap-2">
-                    <span class="iconify" data-icon="solar:snowflake-bold-duotone"></span> Cold Kitchen
-                </a>
-                <a href="#hot" class="hot-bg text-white font-semibold px-8 py-3 rounded-xl hover:opacity-90 transition-all hover:shadow-lg hover:shadow-red-500/20 flex items-center gap-2">
-                    <span class="iconify" data-icon="solar:fire-bold-duotone"></span> Hot Kitchen
-                </a>
-                <a href="#chefs" class="glass gold-border px-8 py-3 rounded-xl text-amber-400 font-medium hover:bg-amber-400/5 transition-all flex items-center gap-2">
-                    <span class="iconify" data-icon="solar:chef-hat-bold-duotone"></span> Chef Roles
-                </a>
+                <a href="#cold" class="cold-bg text-white font-semibold px-8 py-3 rounded-xl hover:opacity-90 transition-all hover:shadow-lg hover:shadow-blue-500/20 flex items-center gap-2"><span class="iconify" data-icon="solar:snowflake-bold-duotone"></span> Cold Kitchen</a>
+                <a href="#hot" class="hot-bg text-white font-semibold px-8 py-3 rounded-xl hover:opacity-90 transition-all hover:shadow-lg hover:shadow-red-500/20 flex items-center gap-2"><span class="iconify" data-icon="solar:fire-bold-duotone"></span> Hot Kitchen</a>
+                <a href="#chefs" class="glass gold-border px-8 py-3 rounded-xl text-amber-400 font-medium hover:bg-amber-400/5 transition-all flex items-center gap-2"><span class="iconify" data-icon="solar:chef-hat-bold-duotone"></span> Chef Roles</a>
             </div>
-
             <div class="animate-fadeInUp opacity-0 stagger-6 mt-16 grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="glass rounded-xl p-4 card-shine">
-                    <div class="text-2xl font-bold cold-gradient">2</div>
-                    <div class="text-xs text-slate-500 mt-1">Kitchen Types</div>
-                </div>
-                <div class="glass rounded-xl p-4 card-shine">
-                    <div class="text-2xl font-bold gold-gradient">8</div>
-                    <div class="text-xs text-slate-500 mt-1">Chef Roles</div>
-                </div>
-                <div class="glass rounded-xl p-4 card-shine">
-                    <div class="text-2xl font-bold hot-gradient">8</div>
-                    <div class="text-xs text-slate-500 mt-1">Cooking Methods</div>
-                </div>
-                <div class="glass rounded-xl p-4 card-shine">
-                    <div class="text-2xl font-bold gold-gradient">20+</div>
-                    <div class="text-xs text-slate-500 mt-1">Food Examples</div>
-                </div>
+                <div class="glass rounded-xl p-4 card-shine"><div class="text-2xl font-bold cold-gradient">2</div><div class="text-xs text-slate-500 mt-1">Kitchen Types</div></div>
+                <div class="glass rounded-xl p-4 card-shine"><div class="text-2xl font-bold gold-gradient">8</div><div class="text-xs text-slate-500 mt-1">Chef Roles</div></div>
+                <div class="glass rounded-xl p-4 card-shine"><div class="text-2xl font-bold hot-gradient">8</div><div class="text-xs text-slate-500 mt-1">Cooking Methods</div></div>
+                <div class="glass rounded-xl p-4 card-shine"><div class="text-2xl font-bold gold-gradient">20+</div><div class="text-xs text-slate-500 mt-1">Food Examples</div></div>
             </div>
         </div>
-
-        <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 animate-bounce">
-            <span class="text-[10px] text-slate-600 uppercase tracking-widest">Scroll Down</span>
-            <span class="iconify text-amber-400/50" data-icon="solar:alt-arrow-down-bold-duotone"></span>
-        </div>
+        <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 animate-bounce"><span class="text-[10px] text-slate-600 uppercase tracking-widest">Scroll Down</span><span class="iconify text-amber-400/50" data-icon="solar:alt-arrow-down-bold-duotone"></span></div>
     </section>
 
-    <!-- ==================== COLD KITCHEN ==================== -->
+    <!-- COLD KITCHEN -->
     <section id="cold" class="relative py-24 section-hidden">
         <div class="max-w-7xl mx-auto px-6">
             <div class="text-center mb-16">
-                <div class="inline-flex items-center gap-2 glass rounded-full px-4 py-2 mb-4" style="border:1px solid rgba(96,165,250,0.2)">
-                    <span class="iconify text-blue-400" data-icon="solar:snowflake-bold-duotone"></span>
-                    <span class="text-xs text-blue-400 tracking-wider uppercase">Part One</span>
-                </div>
-                <h2 class="font-playfair text-3xl md:text-5xl font-bold mb-4">
-                    <span class="cold-gradient">Cold Kitchen</span> (Garde Manger)
-                </h2>
+                <div class="inline-flex items-center gap-2 glass rounded-full px-4 py-2 mb-4" style="border:1px solid rgba(96,165,250,0.2)"><span class="iconify text-blue-400" data-icon="solar:snowflake-bold-duotone"></span><span class="text-xs text-blue-400 tracking-wider uppercase">Part One</span></div>
+                <h2 class="font-playfair text-3xl md:text-5xl font-bold mb-4"><span class="cold-gradient">Cold Kitchen</span> (Garde Manger)</h2>
                 <p class="text-slate-400 max-w-2xl mx-auto">The Cold Kitchen or Garde Manger is the section responsible for preparing all cold dishes—from salads to hors d'oeuvres.</p>
             </div>
-
-            <!-- What is Cold Kitchen -->
             <div class="glass rounded-2xl p-8 card-shine mb-10" style="border:1px solid rgba(96,165,250,0.1)">
                 <div class="flex flex-col md:flex-row gap-8 items-start">
                     <div class="flex-1">
-                        <div class="flex items-center gap-3 mb-4">
-                            <div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
-                                <span class="iconify text-blue-400 text-2xl" data-icon="solar:snowflake-bold-duotone"></span>
-                            </div>
-                            <div>
-                                <h3 class="font-bold text-lg text-white">What is the Cold Kitchen?</h3>
-                                <span class="text-xs text-blue-400">Definition & Purpose</span>
-                            </div>
-                        </div>
+                        <div class="flex items-center gap-3 mb-4"><div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center"><span class="iconify text-blue-400 text-2xl" data-icon="solar:snowflake-bold-duotone"></span></div><div><h3 class="font-bold text-lg text-white">What is the Cold Kitchen?</h3><span class="text-xs text-blue-400">Definition & Purpose</span></div></div>
                         <p class="text-sm text-slate-300 leading-relaxed mb-4">The <strong class="text-blue-300">Cold Kitchen</strong> or <strong class="text-blue-300">Garde Manger</strong> (French for "keeper of the food") is the kitchen department responsible for preparing all cold dishes. This is the first stage of preparation before ingredients are cooked.</p>
                         <p class="text-sm text-slate-300 leading-relaxed">This is where salads, appetizers, cold cuts, pâtés, and more are made. It is crucial because cold food is often the first thing a customer sees—so it must look beautiful and taste great.</p>
                     </div>
                     <div class="w-full md:w-80 shrink-0">
                         <div class="bg-blue-500/5 border border-blue-400/10 rounded-xl p-5 space-y-3">
                             <h4 class="text-sm font-bold text-blue-400 mb-2">❄️ Functions of the Cold Kitchen:</h4>
-                            <div class="flex items-start gap-2 text-xs text-slate-300">
-                                <span class="text-blue-400 mt-0.5">✦</span>
-                                <span>Preparation of cold appetizers and salads</span>
-                            </div>
-                            <div class="flex items-start gap-2 text-xs text-slate-300">
-                                <span class="text-blue-400 mt-0.5">✦</span>
-                                <span>Making dressings, vinaigrettes, and cold sauces</span>
-                            </div>
-                            <div class="flex items-start gap-2 text-xs text-slate-300">
-                                <span class="text-blue-400 mt-0.5">✦</span>
-                                <span>Preparing cold cuts, charcuterie, and pâtés</span>
-                            </div>
-                            <div class="flex items-start gap-2 text-xs text-slate-300">
-                                <span class="text-blue-400 mt-0.5">✦</span>
-                                <span>Setting up and decorating buffet tables</span>
-                            </div>
-                            <div class="flex items-start gap-2 text-xs text-slate-300">
-                                <span class="text-blue-400 mt-0.5">✦</span>
-                                <span>Storing ingredients that require refrigeration</span>
-                            </div>
-                            <div class="flex items-start gap-2 text-xs text-slate-300">
-                                <span class="text-blue-400 mt-0.5">✦</span>
-                                <span>Making pickles, relishes, and sandwiches</span>
-                            </div>
+                            <div class="flex items-start gap-2 text-xs text-slate-300"><span class="text-blue-400 mt-0.5">✦</span><span>Preparation of cold appetizers and salads</span></div>
+                            <div class="flex items-start gap-2 text-xs text-slate-300"><span class="text-blue-400 mt-0.5">✦</span><span>Making dressings, vinaigrettes, and cold sauces</span></div>
+                            <div class="flex items-start gap-2 text-xs text-slate-300"><span class="text-blue-400 mt-0.5">✦</span><span>Preparing cold cuts, charcuterie, and pâtés</span></div>
+                            <div class="flex items-start gap-2 text-xs text-slate-300"><span class="text-blue-400 mt-0.5">✦</span><span>Setting up and decorating buffet tables</span></div>
+                            <div class="flex items-start gap-2 text-xs text-slate-300"><span class="text-blue-400 mt-0.5">✦</span><span>Storing ingredients that require refrigeration</span></div>
+                            <div class="flex items-start gap-2 text-xs text-slate-300"><span class="text-blue-400 mt-0.5">✦</span><span>Making pickles, relishes, and sandwiches</span></div>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Cold Food Examples -->
-            <h3 class="font-bold text-xl mb-6 flex items-center gap-2">
-                <span class="iconify text-blue-400" data-icon="solar:plate-bold-duotone"></span>
-                Examples of Cold Food
-            </h3>
-
+            <h3 class="font-bold text-xl mb-6 flex items-center gap-2"><span class="iconify text-blue-400" data-icon="solar:plate-bold-duotone"></span>Examples of Cold Food</h3>
             <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
-                <div class="glass rounded-2xl p-6 card-shine cold-item glass-hover transition-all duration-300" style="border:1px solid rgba(96,165,250,0.1)">
-                    <div class="w-14 h-14 rounded-2xl bg-green-500/10 flex items-center justify-center mb-4">
-                        <span class="text-3xl">🥗</span>
-                    </div>
-                    <h4 class="font-bold text-white mb-1">Caesar Salad</h4>
-                    <span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">Salad</span>
-                    <p class="text-xs text-slate-400 leading-relaxed mt-3">A classic salad with romaine lettuce, croutons, parmesan cheese, and Caesar dressing. A staple in the cold kitchen.</p>
-                    <div class="mt-3 flex gap-2 flex-wrap">
-                        <span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🥬 Lettuce</span>
-                        <span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🧀 Parmesan</span>
-                        <span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🥖 Croutons</span>
-                    </div>
-                </div>
-
-                <div class="glass rounded-2xl p-6 card-shine cold-item glass-hover transition-all duration-300" style="border:1px solid rgba(96,165,250,0.1)">
-                    <div class="w-14 h-14 rounded-2xl bg-red-500/10 flex items-center justify-center mb-4">
-                        <span class="text-3xl">🥩</span>
-                    </div>
-                    <h4 class="font-bold text-white mb-1">Cold Cuts Platter</h4>
-                    <span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">Charcuterie</span>
-                    <p class="text-xs text-slate-400 leading-relaxed mt-3">Assorted cold meats such as salami, ham, prosciutto, and bologna. Served with cheese, crackers, and olives.</p>
-                    <div class="mt-3 flex gap-2 flex-wrap">
-                        <span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🥩 Salami</span>
-                        <span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🧀 Cheese</span>
-                        <span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🫒 Olives</span>
-                    </div>
-                </div>
-
-                <div class="glass rounded-2xl p-6 card-shine cold-item glass-hover transition-all duration-300" style="border:1px solid rgba(96,165,250,0.1)">
-                    <div class="w-14 h-14 rounded-2xl bg-pink-500/10 flex items-center justify-center mb-4">
-                        <span class="text-3xl">🦐</span>
-                    </div>
-                    <h4 class="font-bold text-white mb-1">Shrimp Cocktail</h4>
-                    <span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">Seafood</span>
-                    <p class="text-xs text-slate-400 leading-relaxed mt-3">Chilled shrimp served with cocktail sauce. An elegant appetizer perfect for special occasions.</p>
-                    <div class="mt-3 flex gap-2 flex-wrap">
-                        <span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🦐 Shrimp</span>
-                        <span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🌶️ Sauce</span>
-                        <span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🍋 Lemon</span>
-                    </div>
-                </div>
-
-                <div class="glass rounded-2xl p-6 card-shine cold-item glass-hover transition-all duration-300" style="border:1px solid rgba(96,165,250,0.1)">
-                    <div class="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center mb-4">
-                        <span class="text-3xl">🥬</span>
-                    </div>
-                    <h4 class="font-bold text-white mb-1">Coleslaw</h4>
-                    <span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">Side Dish</span>
-                    <p class="text-xs text-slate-400 leading-relaxed mt-3">Shredded cabbage and carrots mixed with creamy mayonnaise dressing. Often served as a side dish with fried chicken and BBQ.</p>
-                    <div class="mt-3 flex gap-2 flex-wrap">
-                        <span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🥬 Cabbage</span>
-                        <span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🥕 Carrot</span>
-                        <span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🥛 Mayo</span>
-                    </div>
-                </div>
-
-                <div class="glass rounded-2xl p-6 card-shine cold-item glass-hover transition-all duration-300" style="border:1px solid rgba(96,165,250,0.1)">
-                    <div class="w-14 h-14 rounded-2xl bg-amber-500/10 flex items-center justify-center mb-4">
-                        <span class="text-3xl">🫕</span>
-                    </div>
-                    <h4 class="font-bold text-white mb-1">Pâté</h4>
-                    <span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">Spread</span>
-                    <p class="text-xs text-slate-400 leading-relaxed mt-3">Finely ground meat (usually liver) cooked and chilled. Served with toast or bread. A classic Garde Manger item.</p>
-                    <div class="mt-3 flex gap-2 flex-wrap">
-                        <span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🫁 Liver</span>
-                        <span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🧈 Butter</span>
-                        <span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🍞 Toast</span>
-                    </div>
-                </div>
-
-                <div class="glass rounded-2xl p-6 card-shine cold-item glass-hover transition-all duration-300" style="border:1px solid rgba(96,165,250,0.1)">
-                    <div class="w-14 h-14 rounded-2xl bg-purple-500/10 flex items-center justify-center mb-4">
-                        <span class="text-3xl">🍈</span>
-                    </div>
-                    <h4 class="font-bold text-white mb-1">Fruit Platter</h4>
-                    <span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">Dessert</span>
-                    <p class="text-xs text-slate-400 leading-relaxed mt-3">Fresh fruits beautifully arranged on a platter. Serves as a dessert or appetizer. Perfect for buffets and celebrations.</p>
-                    <div class="mt-3 flex gap-2 flex-wrap">
-                        <span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🍈 Melon</span>
-                        <span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🍓 Berries</span>
-                        <span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🍇 Grapes</span>
-                    </div>
-                </div>
+                <div class="glass rounded-2xl p-6 card-shine cold-item glass-hover transition-all duration-300" style="border:1px solid rgba(96,165,250,0.1)"><div class="w-14 h-14 rounded-2xl bg-green-500/10 flex items-center justify-center mb-4"><span class="text-3xl">🥗</span></div><h4 class="font-bold text-white mb-1">Caesar Salad</h4><span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">Salad</span><p class="text-xs text-slate-400 leading-relaxed mt-3">A classic salad with romaine lettuce, croutons, parmesan cheese, and Caesar dressing. A staple in the cold kitchen.</p><div class="mt-3 flex gap-2 flex-wrap"><span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🥬 Lettuce</span><span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🧀 Parmesan</span><span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🥖 Croutons</span></div></div>
+                <div class="glass rounded-2xl p-6 card-shine cold-item glass-hover transition-all duration-300" style="border:1px solid rgba(96,165,250,0.1)"><div class="w-14 h-14 rounded-2xl bg-red-500/10 flex items-center justify-center mb-4"><span class="text-3xl">🥩</span></div><h4 class="font-bold text-white mb-1">Cold Cuts Platter</h4><span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">Charcuterie</span><p class="text-xs text-slate-400 leading-relaxed mt-3">Assorted cold meats such as salami, ham, prosciutto, and bologna. Served with cheese, crackers, and olives.</p><div class="mt-3 flex gap-2 flex-wrap"><span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🥩 Salami</span><span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🧀 Cheese</span><span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🫒 Olives</span></div></div>
+                <div class="glass rounded-2xl p-6 card-shine cold-item glass-hover transition-all duration-300" style="border:1px solid rgba(96,165,250,0.1)"><div class="w-14 h-14 rounded-2xl bg-pink-500/10 flex items-center justify-center mb-4"><span class="text-3xl">🦐</span></div><h4 class="font-bold text-white mb-1">Shrimp Cocktail</h4><span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">Seafood</span><p class="text-xs text-slate-400 leading-relaxed mt-3">Chilled shrimp served with cocktail sauce. An elegant appetizer perfect for special occasions.</p><div class="mt-3 flex gap-2 flex-wrap"><span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🦐 Shrimp</span><span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🌶️ Sauce</span><span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🍋 Lemon</span></div></div>
+                <div class="glass rounded-2xl p-6 card-shine cold-item glass-hover transition-all duration-300" style="border:1px solid rgba(96,165,250,0.1)"><div class="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center mb-4"><span class="text-3xl">🥬</span></div><h4 class="font-bold text-white mb-1">Coleslaw</h4><span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">Side Dish</span><p class="text-xs text-slate-400 leading-relaxed mt-3">Shredded cabbage and carrots mixed with creamy mayonnaise dressing. Often served as a side dish with fried chicken and BBQ.</p><div class="mt-3 flex gap-2 flex-wrap"><span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🥬 Cabbage</span><span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🥕 Carrot</span><span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🥛 Mayo</span></div></div>
+                <div class="glass rounded-2xl p-6 card-shine cold-item glass-hover transition-all duration-300" style="border:1px solid rgba(96,165,250,0.1)"><div class="w-14 h-14 rounded-2xl bg-amber-500/10 flex items-center justify-center mb-4"><span class="text-3xl">🫕</span></div><h4 class="font-bold text-white mb-1">Pâté</h4><span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">Spread</span><p class="text-xs text-slate-400 leading-relaxed mt-3">Finely ground meat (usually liver) cooked and chilled. Served with toast or bread. A classic Garde Manger item.</p><div class="mt-3 flex gap-2 flex-wrap"><span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🫁 Liver</span><span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🧈 Butter</span><span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🍞 Toast</span></div></div>
+                <div class="glass rounded-2xl p-6 card-shine cold-item glass-hover transition-all duration-300" style="border:1px solid rgba(96,165,250,0.1)"><div class="w-14 h-14 rounded-2xl bg-purple-500/10 flex items-center justify-center mb-4"><span class="text-3xl">🍈</span></div><h4 class="font-bold text-white mb-1">Fruit Platter</h4><span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">Dessert</span><p class="text-xs text-slate-400 leading-relaxed mt-3">Fresh fruits beautifully arranged on a platter. Serves as a dessert or appetizer. Perfect for buffets and celebrations.</p><div class="mt-3 flex gap-2 flex-wrap"><span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🍈 Melon</span><span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🍓 Berries</span><span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">🍇 Grapes</span></div></div>
             </div>
-
-            <!-- More cold items -->
             <div class="glass rounded-2xl p-6 card-shine" style="border:1px solid rgba(96,165,250,0.1)">
                 <h4 class="text-sm font-bold text-blue-400 mb-4">❄️ More Cold Food Examples:</h4>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -380,213 +317,58 @@
         </div>
     </section>
 
-    <!-- Divider -->
-    <div class="max-w-4xl mx-auto">
-        <div class="h-px" style="background: linear-gradient(90deg, rgba(96,165,250,0.3), rgba(251,191,36,0.3), rgba(248,113,113,0.3))"></div>
-    </div>
+    <div class="max-w-4xl mx-auto"><div class="h-px" style="background:linear-gradient(90deg,rgba(96,165,250,0.3),rgba(251,191,36,0.3),rgba(248,113,113,0.3))"></div></div>
 
-    <!-- ==================== HOT KITCHEN ==================== -->
+    <!-- HOT KITCHEN -->
     <section id="hot" class="relative py-24 section-hidden">
         <div class="max-w-7xl mx-auto px-6">
             <div class="text-center mb-16">
-                <div class="inline-flex items-center gap-2 glass rounded-full px-4 py-2 mb-4" style="border:1px solid rgba(248,113,113,0.2)">
-                    <span class="iconify text-red-400" data-icon="solar:fire-bold-duotone"></span>
-                    <span class="text-xs text-red-400 tracking-wider uppercase">Part Two</span>
-                </div>
-                <h2 class="font-playfair text-3xl md:text-5xl font-bold mb-4">
-                    <span class="hot-gradient">Hot Kitchen</span> (Cuisine Chaude)
-                </h2>
+                <div class="inline-flex items-center gap-2 glass rounded-full px-4 py-2 mb-4" style="border:1px solid rgba(248,113,113,0.2)"><span class="iconify text-red-400" data-icon="solar:fire-bold-duotone"></span><span class="text-xs text-red-400 tracking-wider uppercase">Part Two</span></div>
+                <h2 class="font-playfair text-3xl md:text-5xl font-bold mb-4"><span class="hot-gradient">Hot Kitchen</span> (Cuisine Chaude)</h2>
                 <p class="text-slate-400 max-w-2xl mx-auto">The Hot Kitchen is the heart of the kitchen—where hot food is cooked using fire, heat, and various cooking methods.</p>
             </div>
-
-            <!-- What is Hot Kitchen -->
             <div class="glass rounded-2xl p-8 card-shine mb-10" style="border:1px solid rgba(248,113,113,0.1)">
                 <div class="flex flex-col md:flex-row gap-8 items-start">
                     <div class="flex-1">
-                        <div class="flex items-center gap-3 mb-4">
-                            <div class="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center">
-                                <span class="iconify text-red-400 text-2xl" data-icon="solar:fire-bold-duotone"></span>
-                            </div>
-                            <div>
-                                <h3 class="font-bold text-lg text-white">What is the Hot Kitchen?</h3>
-                                <span class="text-xs text-red-400">Definition & Purpose</span>
-                            </div>
-                        </div>
+                        <div class="flex items-center gap-3 mb-4"><div class="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center"><span class="iconify text-red-400 text-2xl" data-icon="solar:fire-bold-duotone"></span></div><div><h3 class="font-bold text-lg text-white">What is the Hot Kitchen?</h3><span class="text-xs text-red-400">Definition & Purpose</span></div></div>
                         <p class="text-sm text-slate-300 leading-relaxed mb-4">The <strong class="text-red-300">Hot Kitchen</strong> or <strong class="text-red-300">Cuisine Chaude</strong> is the main cooking area where heat is used to prepare food. This is where you'll find stoves, ovens, grills, and fryers.</p>
                         <p class="text-sm text-slate-300 leading-relaxed">It is the largest department in the kitchen and is responsible for all hot dishes—from soups to grilled meats, from fried food to baked goods.</p>
                     </div>
                     <div class="w-full md:w-80 shrink-0">
                         <div class="bg-red-500/5 border border-red-400/10 rounded-xl p-5 space-y-3">
                             <h4 class="text-sm font-bold text-red-400 mb-2">🔥 Functions of the Hot Kitchen:</h4>
-                            <div class="flex items-start gap-2 text-xs text-slate-300">
-                                <span class="text-red-400 mt-0.5">✦</span>
-                                <span>Cooking hot main courses (entrées)</span>
-                            </div>
-                            <div class="flex items-start gap-2 text-xs text-slate-300">
-                                <span class="text-red-400 mt-0.5">✦</span>
-                                <span>Making soups, sauces, and gravies</span>
-                            </div>
-                            <div class="flex items-start gap-2 text-xs text-slate-300">
-                                <span class="text-red-400 mt-0.5">✦</span>
-                                <span>Grilling meat, fish, and vegetables</span>
-                            </div>
-                            <div class="flex items-start gap-2 text-xs text-slate-300">
-                                <span class="text-red-400 mt-0.5">✦</span>
-                                <span>Frying, sautéing, and boiling</span>
-                            </div>
-                            <div class="flex items-start gap-2 text-xs text-slate-300">
-                                <span class="text-red-400 mt-0.5">✦</span>
-                                <span>Steaming and poaching food</span>
-                            </div>
-                            <div class="flex items-start gap-2 text-xs text-slate-300">
-                                <span class="text-red-400 mt-0.5">✦</span>
-                                <span>Baking bread, pastry, and desserts</span>
-                            </div>
+                            <div class="flex items-start gap-2 text-xs text-slate-300"><span class="text-red-400 mt-0.5">✦</span><span>Cooking hot main courses (entrées)</span></div>
+                            <div class="flex items-start gap-2 text-xs text-slate-300"><span class="text-red-400 mt-0.5">✦</span><span>Making soups, sauces, and gravies</span></div>
+                            <div class="flex items-start gap-2 text-xs text-slate-300"><span class="text-red-400 mt-0.5">✦</span><span>Grilling meat, fish, and vegetables</span></div>
+                            <div class="flex items-start gap-2 text-xs text-slate-300"><span class="text-red-400 mt-0.5">✦</span><span>Frying, sautéing, and boiling</span></div>
+                            <div class="flex items-start gap-2 text-xs text-slate-300"><span class="text-red-400 mt-0.5">✦</span><span>Steaming and poaching food</span></div>
+                            <div class="flex items-start gap-2 text-xs text-slate-300"><span class="text-red-400 mt-0.5">✦</span><span>Baking bread, pastry, and desserts</span></div>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Cooking Methods -->
             <div class="glass rounded-2xl p-6 card-shine mb-10" style="border:1px solid rgba(248,113,113,0.1)">
                 <h4 class="text-sm font-bold text-red-400 mb-4">🍳 Cooking Methods in the Hot Kitchen:</h4>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div class="bg-red-500/5 rounded-lg px-3 py-3 text-center">
-                        <div class="text-xl mb-1">🥘</div>
-                        <div class="text-xs font-semibold text-white">Sautéing</div>
-                        <div class="text-[10px] text-slate-500">Quick cook in little fat</div>
-                    </div>
-                    <div class="bg-red-500/5 rounded-lg px-3 py-3 text-center">
-                        <div class="text-xl mb-1">🍳</div>
-                        <div class="text-xs font-semibold text-white">Frying</div>
-                        <div class="text-[10px] text-slate-500">Deep or shallow fry</div>
-                    </div>
-                    <div class="bg-red-500/5 rounded-lg px-3 py-3 text-center">
-                        <div class="text-xl mb-1">🥩</div>
-                        <div class="text-xs font-semibold text-white">Grilling</div>
-                        <div class="text-[10px] text-slate-500">Cook over direct heat</div>
-                    </div>
-                    <div class="bg-red-500/5 rounded-lg px-3 py-3 text-center">
-                        <div class="text-xl mb-1">🍲</div>
-                        <div class="text-xs font-semibold text-white">Boiling</div>
-                        <div class="text-[10px] text-slate-500">Cook in boiling water</div>
-                    </div>
-                    <div class="bg-red-500/5 rounded-lg px-3 py-3 text-center">
-                        <div class="text-xl mb-1">♨️</div>
-                        <div class="text-xs font-semibold text-white">Steaming</div>
-                        <div class="text-[10px] text-slate-500">Cook with steam</div>
-                    </div>
-                    <div class="bg-red-500/5 rounded-lg px-3 py-3 text-center">
-                        <div class="text-xl mb-1">🫕</div>
-                        <div class="text-xs font-semibold text-white">Stewing</div>
-                        <div class="text-[10px] text-slate-500">Slow cook in liquid</div>
-                    </div>
-                    <div class="bg-red-500/5 rounded-lg px-3 py-3 text-center">
-                        <div class="text-xl mb-1">🥖</div>
-                        <div class="text-xs font-semibold text-white">Baking</div>
-                        <div class="text-[10px] text-slate-500">Cook in an oven</div>
-                    </div>
-                    <div class="bg-red-500/5 rounded-lg px-3 py-3 text-center">
-                        <div class="text-xl mb-1">🍖</div>
-                        <div class="text-xs font-semibold text-white">Roasting</div>
-                        <div class="text-[10px] text-slate-500">Oven with dry heat</div>
-                    </div>
+                    <div class="bg-red-500/5 rounded-lg px-3 py-3 text-center"><div class="text-xl mb-1">🥘</div><div class="text-xs font-semibold text-white">Sautéing</div><div class="text-[10px] text-slate-500">Quick cook in little fat</div></div>
+                    <div class="bg-red-500/5 rounded-lg px-3 py-3 text-center"><div class="text-xl mb-1">🍳</div><div class="text-xs font-semibold text-white">Frying</div><div class="text-[10px] text-slate-500">Deep or shallow fry</div></div>
+                    <div class="bg-red-500/5 rounded-lg px-3 py-3 text-center"><div class="text-xl mb-1">🥩</div><div class="text-xs font-semibold text-white">Grilling</div><div class="text-[10px] text-slate-500">Cook over direct heat</div></div>
+                    <div class="bg-red-500/5 rounded-lg px-3 py-3 text-center"><div class="text-xl mb-1">🍲</div><div class="text-xs font-semibold text-white">Boiling</div><div class="text-[10px] text-slate-500">Cook in boiling water</div></div>
+                    <div class="bg-red-500/5 rounded-lg px-3 py-3 text-center"><div class="text-xl mb-1">♨️</div><div class="text-xs font-semibold text-white">Steaming</div><div class="text-[10px] text-slate-500">Cook with steam</div></div>
+                    <div class="bg-red-500/5 rounded-lg px-3 py-3 text-center"><div class="text-xl mb-1">🫕</div><div class="text-xs font-semibold text-white">Stewing</div><div class="text-[10px] text-slate-500">Slow cook in liquid</div></div>
+                    <div class="bg-red-500/5 rounded-lg px-3 py-3 text-center"><div class="text-xl mb-1">🥖</div><div class="text-xs font-semibold text-white">Baking</div><div class="text-[10px] text-slate-500">Cook in an oven</div></div>
+                    <div class="bg-red-500/5 rounded-lg px-3 py-3 text-center"><div class="text-xl mb-1">🍖</div><div class="text-xs font-semibold text-white">Roasting</div><div class="text-[10px] text-slate-500">Oven with dry heat</div></div>
                 </div>
             </div>
-
-            <!-- Hot Food Examples -->
-            <h3 class="font-bold text-xl mb-6 flex items-center gap-2">
-                <span class="iconify text-red-400" data-icon="solar:plate-bold-duotone"></span>
-                Examples of Hot Food
-            </h3>
-
+            <h3 class="font-bold text-xl mb-6 flex items-center gap-2"><span class="iconify text-red-400" data-icon="solar:plate-bold-duotone"></span>Examples of Hot Food</h3>
             <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
-                <div class="glass rounded-2xl p-6 card-shine hot-item glass-hover transition-all duration-300" style="border:1px solid rgba(248,113,113,0.1)">
-                    <div class="w-14 h-14 rounded-2xl bg-red-500/10 flex items-center justify-center mb-4">
-                        <span class="text-3xl">🥩</span>
-                    </div>
-                    <h4 class="font-bold text-white mb-1">Grilled Steak</h4>
-                    <span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">Grilled</span>
-                    <p class="text-xs text-slate-400 leading-relaxed mt-3">Perfectly grilled beef with the right doneness. A classic hot kitchen main course that requires skill in grilling.</p>
-                    <div class="mt-3 flex gap-2 flex-wrap">
-                        <span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">🥩 Beef</span>
-                        <span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">🧂 Seasoning</span>
-                        <span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">🔥 Grill</span>
-                    </div>
-                </div>
-
-                <div class="glass rounded-2xl p-6 card-shine hot-item glass-hover transition-all duration-300" style="border:1px solid rgba(248,113,113,0.1)">
-                    <div class="w-14 h-14 rounded-2xl bg-orange-500/10 flex items-center justify-center mb-4">
-                        <span class="text-3xl">🍲</span>
-                    </div>
-                    <h4 class="font-bold text-white mb-1">Sinigang na Baboy</h4>
-                    <span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">Soup</span>
-                    <p class="text-xs text-slate-400 leading-relaxed mt-3">A famous Filipino sour soup made with tamarind. A hot dish with pork and fresh vegetables—comfort food at its best.</p>
-                    <div class="mt-3 flex gap-2 flex-wrap">
-                        <span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">🐷 Pork</span>
-                        <span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">🫒 Tamarind</span>
-                        <span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">🥬 Veggies</span>
-                    </div>
-                </div>
-
-                <div class="glass rounded-2xl p-6 card-shine hot-item glass-hover transition-all duration-300" style="border:1px solid rgba(248,113,113,0.1)">
-                    <div class="w-14 h-14 rounded-2xl bg-amber-500/10 flex items-center justify-center mb-4">
-                        <span class="text-3xl">🍗</span>
-                    </div>
-                    <h4 class="font-bold text-white mb-1">Fried Chicken</h4>
-                    <span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">Fried</span>
-                    <p class="text-xs text-slate-400 leading-relaxed mt-3">Crispy chicken that is deep-fried to golden perfection. One of the most popular hot foods worldwide!</p>
-                    <div class="mt-3 flex gap-2 flex-wrap">
-                        <span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">🍗 Chicken</span>
-                        <span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">🌾 Flour</span>
-                        <span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">🛢️ Deep Fry</span>
-                    </div>
-                </div>
-
-                <div class="glass rounded-2xl p-6 card-shine hot-item glass-hover transition-all duration-300" style="border:1px solid rgba(248,113,113,0.1)">
-                    <div class="w-14 h-14 rounded-2xl bg-yellow-500/10 flex items-center justify-center mb-4">
-                        <span class="text-3xl">🥘</span>
-                    </div>
-                    <h4 class="font-bold text-white mb-1">Chicken/Pork Adobo</h4>
-                    <span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">Stewed</span>
-                    <p class="text-xs text-slate-400 leading-relaxed mt-3">The national dish of the Philippines. Meat simmered in soy sauce, vinegar, garlic, and peppercorns. A symbol of Filipino culture.</p>
-                    <div class="mt-3 flex gap-2 flex-wrap">
-                        <span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">🥩 Meat</span>
-                        <span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">🫙 Soy/Vinegar</span>
-                        <span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">🧄 Garlic</span>
-                    </div>
-                </div>
-
-                <div class="glass rounded-2xl p-6 card-shine hot-item glass-hover transition-all duration-300" style="border:1px solid rgba(248,113,113,0.1)">
-                    <div class="w-14 h-14 rounded-2xl bg-pink-500/10 flex items-center justify-center mb-4">
-                        <span class="text-3xl">🍝</span>
-                    </div>
-                    <h4 class="font-bold text-white mb-1">Baked Lasagna</h4>
-                    <span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">Baked</span>
-                    <p class="text-xs text-slate-400 leading-relaxed mt-3">Layered pasta with meat sauce, cheese, and béchamel. Baked hot until the cheese is bubbly and golden on top.</p>
-                    <div class="mt-3 flex gap-2 flex-wrap">
-                        <span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">🍝 Pasta</span>
-                        <span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">🧀 Cheese</span>
-                        <span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">🥩 Meat Sauce</span>
-                    </div>
-                </div>
-
-                <div class="glass rounded-2xl p-6 card-shine hot-item glass-hover transition-all duration-300" style="border:1px solid rgba(248,113,113,0.1)">
-                    <div class="w-14 h-14 rounded-2xl bg-cyan-500/10 flex items-center justify-center mb-4">
-                        <span class="text-3xl">🐟</span>
-                    </div>
-                    <h4 class="font-bold text-white mb-1">Steamed Fish</h4>
-                    <span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">Steamed</span>
-                    <p class="text-xs text-slate-400 leading-relaxed mt-3">Healthy and clean in flavor—fish cooked in steam with ginger, soy sauce, and onions. Light and nutritious.</p>
-                    <div class="mt-3 flex gap-2 flex-wrap">
-                        <span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">🐟 Fish</span>
-                        <span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">🫚 Ginger</span>
-                        <span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">♨️ Steam</span>
-                    </div>
-                </div>
+                <div class="glass rounded-2xl p-6 card-shine hot-item glass-hover transition-all duration-300" style="border:1px solid rgba(248,113,113,0.1)"><div class="w-14 h-14 rounded-2xl bg-red-500/10 flex items-center justify-center mb-4"><span class="text-3xl">🥩</span></div><h4 class="font-bold text-white mb-1">Grilled Steak</h4><span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">Grilled</span><p class="text-xs text-slate-400 leading-relaxed mt-3">Perfectly grilled beef with the right doneness. A classic hot kitchen main course that requires skill in grilling.</p><div class="mt-3 flex gap-2 flex-wrap"><span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">🥩 Beef</span><span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">🧂 Seasoning</span><span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">🔥 Grill</span></div></div>
+                <div class="glass rounded-2xl p-6 card-shine hot-item glass-hover transition-all duration-300" style="border:1px solid rgba(248,113,113,0.1)"><div class="w-14 h-14 rounded-2xl bg-orange-500/10 flex items-center justify-center mb-4"><span class="text-3xl">🍲</span></div><h4 class="font-bold text-white mb-1">Sinigang na Baboy</h4><span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">Soup</span><p class="text-xs text-slate-400 leading-relaxed mt-3">A famous Filipino sour soup made with tamarind. A hot dish with pork and fresh vegetables—comfort food at its best.</p><div class="mt-3 flex gap-2 flex-wrap"><span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">🐷 Pork</span><span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">🫒 Tamarind</span><span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">🥬 Veggies</span></div></div>
+                <div class="glass rounded-2xl p-6 card-shine hot-item glass-hover transition-all duration-300" style="border:1px solid rgba(248,113,113,0.1)"><div class="w-14 h-14 rounded-2xl bg-amber-500/10 flex items-center justify-center mb-4"><span class="text-3xl">🍗</span></div><h4 class="font-bold text-white mb-1">Fried Chicken</h4><span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">Fried</span><p class="text-xs text-slate-400 leading-relaxed mt-3">Crispy chicken that is deep-fried to golden perfection. One of the most popular hot foods worldwide!</p><div class="mt-3 flex gap-2 flex-wrap"><span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">🍗 Chicken</span><span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">🌾 Flour</span><span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">🛢️ Deep Fry</span></div></div>
+                <div class="glass rounded-2xl p-6 card-shine hot-item glass-hover transition-all duration-300" style="border:1px solid rgba(248,113,113,0.1)"><div class="w-14 h-14 rounded-2xl bg-yellow-500/10 flex items-center justify-center mb-4"><span class="text-3xl">🥘</span></div><h4 class="font-bold text-white mb-1">Chicken/Pork Adobo</h4><span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">Stewed</span><p class="text-xs text-slate-400 leading-relaxed mt-3">The national dish of the Philippines. Meat simmered in soy sauce, vinegar, garlic, and peppercorns.</p><div class="mt-3 flex gap-2 flex-wrap"><span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">🥩 Meat</span><span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">🫙 Soy/Vinegar</span><span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">🧄 Garlic</span></div></div>
+                <div class="glass rounded-2xl p-6 card-shine hot-item glass-hover transition-all duration-300" style="border:1px solid rgba(248,113,113,0.1)"><div class="w-14 h-14 rounded-2xl bg-pink-500/10 flex items-center justify-center mb-4"><span class="text-3xl">🍝</span></div><h4 class="font-bold text-white mb-1">Baked Lasagna</h4><span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">Baked</span><p class="text-xs text-slate-400 leading-relaxed mt-3">Layered pasta with meat sauce, cheese, and béchamel. Baked hot until the cheese is bubbly and golden on top.</p><div class="mt-3 flex gap-2 flex-wrap"><span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">🍝 Pasta</span><span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">🧀 Cheese</span><span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">🥩 Meat Sauce</span></div></div>
+                <div class="glass rounded-2xl p-6 card-shine hot-item glass-hover transition-all duration-300" style="border:1px solid rgba(248,113,113,0.1)"><div class="w-14 h-14 rounded-2xl bg-cyan-500/10 flex items-center justify-center mb-4"><span class="text-3xl">🐟</span></div><h4 class="font-bold text-white mb-1">Steamed Fish</h4><span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">Steamed</span><p class="text-xs text-slate-400 leading-relaxed mt-3">Healthy and clean in flavor—fish cooked in steam with ginger, soy sauce, and onions. Light and nutritious.</p><div class="mt-3 flex gap-2 flex-wrap"><span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">🐟 Fish</span><span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">🫚 Ginger</span><span class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded-full">♨️ Steam</span></div></div>
             </div>
-
-            <!-- More hot items -->
             <div class="glass rounded-2xl p-6 card-shine" style="border:1px solid rgba(248,113,113,0.1)">
                 <h4 class="text-sm font-bold text-red-400 mb-4">🔥 More Hot Food Examples:</h4>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -603,24 +385,16 @@
         </div>
     </section>
 
-    <!-- Divider -->
     <div class="max-w-4xl mx-auto"><div class="divider-gold"></div></div>
 
-    <!-- ==================== CHEF ROLES ==================== -->
+    <!-- CHEF ROLES -->
     <section id="chefs" class="relative py-24 section-hidden">
         <div class="max-w-7xl mx-auto px-6">
             <div class="text-center mb-16">
-                <div class="inline-flex items-center gap-2 glass rounded-full px-4 py-2 mb-4 gold-border" style="border:1px solid rgba(251,191,36,0.2)">
-                    <span class="iconify text-amber-400" data-icon="solar:chef-hat-bold-duotone"></span>
-                    <span class="text-xs text-amber-400 tracking-wider uppercase">Part Three</span>
-                </div>
-                <h2 class="font-playfair text-3xl md:text-5xl font-bold mb-4">
-                    Kitchen <span class="gold-gradient">Chef Roles</span>
-                </h2>
+                <div class="inline-flex items-center gap-2 glass rounded-full px-4 py-2 mb-4 gold-border" style="border:1px solid rgba(251,191,36,0.2)"><span class="iconify text-amber-400" data-icon="solar:chef-hat-bold-duotone"></span><span class="text-xs text-amber-400 tracking-wider uppercase">Part Three</span></div>
+                <h2 class="font-playfair text-3xl md:text-5xl font-bold mb-4">Kitchen <span class="gold-gradient">Chef Roles</span></h2>
                 <p class="text-slate-400 max-w-2xl mx-auto">Every member of the kitchen has a specific role and responsibility. Get to know each one.</p>
             </div>
-
-            <!-- Kitchen Hierarchy -->
             <div class="glass rounded-2xl p-8 card-shine mb-12 text-center">
                 <h3 class="font-bold text-amber-400 mb-6">📊 Kitchen Brigade System Hierarchy</h3>
                 <div class="flex flex-col items-center gap-2">
@@ -639,216 +413,44 @@
                     <div class="bg-slate-400/10 border border-slate-400/20 text-slate-400 font-medium px-4 py-2 rounded-lg text-xs">Kitchen Helper</div>
                 </div>
             </div>
-
-            <!-- Chef Cards -->
             <div class="grid md:grid-cols-2 gap-6">
-
-                <!-- Executive Chef -->
-                <div class="chef-card glass rounded-2xl p-6 card-shine glass-hover transition-all duration-300 cursor-pointer" style="border:1px solid rgba(251,191,36,0.15)" onclick="openChefModal('executive')">
-                    <div class="flex items-start gap-4">
-                        <div class="chef-icon w-16 h-16 rounded-2xl gold-bg flex items-center justify-center shrink-0 transition-all duration-300">
-                            <span class="iconify text-black text-3xl" data-icon="solar:crown-bold-duotone"></span>
-                        </div>
-                        <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-1">
-                                <h3 class="font-bold text-lg text-white">Executive Chef</h3>
-                                <span class="text-[10px] gold-bg text-black font-bold px-2 py-0.5 rounded-full">TOP</span>
-                            </div>
-                            <p class="text-xs text-amber-400 mb-2 italic">Chef de Cuisine / Head Chef</p>
-                            <p class="text-sm text-slate-400 leading-relaxed">The highest-ranking leader of the entire kitchen. Plans the menu, maintains quality, and manages all chefs and staff.</p>
-                            <div class="mt-3 flex gap-2 flex-wrap">
-                                <span class="text-[10px] bg-amber-400/10 text-amber-400 px-2 py-1 rounded-full">📋 Menu Planning</span>
-                                <span class="text-[10px] bg-amber-400/10 text-amber-400 px-2 py-1 rounded-full">👨‍💼 Management</span>
-                                <span class="text-[10px] bg-amber-400/10 text-amber-400 px-2 py-1 rounded-full">✅ Quality Control</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Sous Chef -->
-                <div class="chef-card glass rounded-2xl p-6 card-shine glass-hover transition-all duration-300 cursor-pointer" style="border:1px solid rgba(251,191,36,0.15)" onclick="openChefModal('sous')">
-                    <div class="flex items-start gap-4">
-                        <div class="chef-icon w-16 h-16 rounded-2xl bg-amber-400/20 flex items-center justify-center shrink-0 transition-all duration-300">
-                            <span class="iconify text-amber-400 text-3xl" data-icon="solar:shield-star-bold-duotone"></span>
-                        </div>
-                        <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-1">
-                                <h3 class="font-bold text-lg text-white">Sous Chef</h3>
-                                <span class="text-[10px] bg-amber-400/20 text-amber-400 font-bold px-2 py-0.5 rounded-full">2IC</span>
-                            </div>
-                            <p class="text-xs text-amber-400 mb-2 italic">Second-in-Command / Under Chef</p>
-                            <p class="text-sm text-slate-400 leading-relaxed">The second-in-command. Fills in for the Executive Chef when absent. Provides direction and assists all stations.</p>
-                            <div class="mt-3 flex gap-2 flex-wrap">
-                                <span class="text-[10px] bg-amber-400/10 text-amber-400 px-2 py-1 rounded-full">🔄 Deputizing</span>
-                                <span class="text-[10px] bg-amber-400/10 text-amber-400 px-2 py-1 rounded-full">📋 Supervision</span>
-                                <span class="text-[10px] bg-amber-400/10 text-amber-400 px-2 py-1 rounded-full">🤝 Coordination</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Sauce Chef -->
-                <div class="chef-card glass rounded-2xl p-6 card-shine glass-hover transition-all duration-300 cursor-pointer" style="border:1px solid rgba(248,113,113,0.15)" onclick="openChefModal('sauce')">
-                    <div class="flex items-start gap-4">
-                        <div class="chef-icon w-16 h-16 rounded-2xl bg-red-400/15 flex items-center justify-center shrink-0 transition-all duration-300">
-                            <span class="iconify text-red-400 text-3xl" data-icon="solar:jar-of-pills-2-bold-duotone"></span>
-                        </div>
-                        <div class="flex-1">
-                            <h3 class="font-bold text-lg text-white mb-1">Sauce Chef</h3>
-                            <p class="text-xs text-red-400 mb-2 italic">Saucier / Chef Saucier</p>
-                            <p class="text-sm text-slate-400 leading-relaxed">The specialist in making sauces, soups, and gravies. One of the most important chefs because sauce gives life to every dish.</p>
-                            <div class="mt-3 flex gap-2 flex-wrap">
-                                <span class="text-[10px] bg-red-400/10 text-red-400 px-2 py-1 rounded-full">🫙 Sauces</span>
-                                <span class="text-[10px] bg-red-400/10 text-red-400 px-2 py-1 rounded-full">🍲 Soups</span>
-                                <span class="text-[10px] bg-red-400/10 text-red-400 px-2 py-1 rounded-full">🥘 Gravies</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Grilled Chef -->
-                <div class="chef-card glass rounded-2xl p-6 card-shine glass-hover transition-all duration-300 cursor-pointer" style="border:1px solid rgba(251,146,60,0.15)" onclick="openChefModal('grilled')">
-                    <div class="flex items-start gap-4">
-                        <div class="chef-icon w-16 h-16 rounded-2xl bg-orange-400/15 flex items-center justify-center shrink-0 transition-all duration-300">
-                            <span class="iconify text-orange-400 text-3xl" data-icon="solar:fire-bold-duotone"></span>
-                        </div>
-                        <div class="flex-1">
-                            <h3 class="font-bold text-lg text-white mb-1">Grilled Chef</h3>
-                            <p class="text-xs text-orange-400 mb-2 italic">Grillardin / Chef Grillardin</p>
-                            <p class="text-sm text-slate-400 leading-relaxed">The expert in grilling meat, fish, and vegetables. Maintains proper temperature and doneness for every grilled item.</p>
-                            <div class="mt-3 flex gap-2 flex-wrap">
-                                <span class="text-[10px] bg-orange-400/10 text-orange-400 px-2 py-1 rounded-full">🥩 Grilling</span>
-                                <span class="text-[10px] bg-orange-400/10 text-orange-400 px-2 py-1 rounded-full">🔥 Roasting</span>
-                                <span class="text-[10px] bg-orange-400/10 text-orange-400 px-2 py-1 rounded-full">🌡️ Temperature</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Cold Kitchen Chef -->
-                <div class="chef-card glass rounded-2xl p-6 card-shine glass-hover transition-all duration-300 cursor-pointer" style="border:1px solid rgba(96,165,250,0.15)" onclick="openChefModal('cold')">
-                    <div class="flex items-start gap-4">
-                        <div class="chef-icon w-16 h-16 rounded-2xl bg-blue-400/15 flex items-center justify-center shrink-0 transition-all duration-300">
-                            <span class="iconify text-blue-400 text-3xl" data-icon="solar:snowflake-bold-duotone"></span>
-                        </div>
-                        <div class="flex-1">
-                            <h3 class="font-bold text-lg text-white mb-1">Cold Kitchen Chef</h3>
-                            <p class="text-xs text-blue-400 mb-2 italic">Garde Manger / Chef Garde Manger</p>
-                            <p class="text-sm text-slate-400 leading-relaxed">In charge of the entire cold kitchen department. Makes salads, appetizers, cold cuts, and all cold food items.</p>
-                            <div class="mt-3 flex gap-2 flex-wrap">
-                                <span class="text-[10px] bg-blue-400/10 text-blue-400 px-2 py-1 rounded-full">🥗 Salads</span>
-                                <span class="text-[10px] bg-blue-400/10 text-blue-400 px-2 py-1 rounded-full">🧊 Cold Prep</span>
-                                <span class="text-[10px] bg-blue-400/10 text-blue-400 px-2 py-1 rounded-full">🍖 Charcuterie</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Pastry Chef -->
-                <div class="chef-card glass rounded-2xl p-6 card-shine glass-hover transition-all duration-300 cursor-pointer" style="border:1px solid rgba(236,72,153,0.15)" onclick="openChefModal('pastry')">
-                    <div class="flex items-start gap-4">
-                        <div class="chef-icon w-16 h-16 rounded-2xl bg-pink-400/15 flex items-center justify-center shrink-0 transition-all duration-300">
-                            <span class="iconify text-pink-400 text-3xl" data-icon="solar:donut-bold-duotone"></span>
-                        </div>
-                        <div class="flex-1">
-                            <h3 class="font-bold text-lg text-white mb-1">Pastry Chef</h3>
-                            <p class="text-xs text-pink-400 mb-2 italic">Pâtissier / Chef Pâtissier</p>
-                            <p class="text-sm text-slate-400 leading-relaxed">The expert in making bread, cakes, pastries, and desserts. Requires skill in baking, decorating, and balancing flavors.</p>
-                            <div class="mt-3 flex gap-2 flex-wrap">
-                                <span class="text-[10px] bg-pink-400/10 text-pink-400 px-2 py-1 rounded-full">🍞 Baking</span>
-                                <span class="text-[10px] bg-pink-400/10 text-pink-400 px-2 py-1 rounded-full">🎂 Pastry</span>
-                                <span class="text-[10px] bg-pink-400/10 text-pink-400 px-2 py-1 rounded-full">🍮 Desserts</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Fish Chef -->
-                <div class="chef-card glass rounded-2xl p-6 card-shine glass-hover transition-all duration-300 cursor-pointer" style="border:1px solid rgba(34,211,238,0.15)" onclick="openChefModal('fish')">
-                    <div class="flex items-start gap-4">
-                        <div class="chef-icon w-16 h-16 rounded-2xl bg-cyan-400/15 flex items-center justify-center shrink-0 transition-all duration-300">
-                            <span class="iconify text-cyan-400 text-3xl" data-icon="solar:swimming-bold-duotone"></span>
-                        </div>
-                        <div class="flex-1">
-                            <h3 class="font-bold text-lg text-white mb-1">Fish Chef</h3>
-                            <p class="text-xs text-cyan-400 mb-2 italic">Poissonnier / Chef Poissonnier</p>
-                            <p class="text-sm text-slate-400 leading-relaxed">The specialist in preparing and cooking fish and seafood. Skilled in filleting, scaling, and cooking fish in various methods.</p>
-                            <div class="mt-3 flex gap-2 flex-wrap">
-                                <span class="text-[10px] bg-cyan-400/10 text-cyan-400 px-2 py-1 rounded-full">🐟 Fish Prep</span>
-                                <span class="text-[10px] bg-cyan-400/10 text-cyan-400 px-2 py-1 rounded-full">🦐 Seafood</span>
-                                <span class="text-[10px] bg-cyan-400/10 text-cyan-400 px-2 py-1 rounded-full">🔪 Filleting</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Kitchen Helper -->
-                <div class="chef-card glass rounded-2xl p-6 card-shine glass-hover transition-all duration-300 cursor-pointer" style="border:1px solid rgba(148,163,184,0.15)" onclick="openChefModal('helper')">
-                    <div class="flex items-start gap-4">
-                        <div class="chef-icon w-16 h-16 rounded-2xl bg-slate-400/15 flex items-center justify-center shrink-0 transition-all duration-300">
-                            <span class="iconify text-slate-400 text-3xl" data-icon="solar:hand-shake-bold-duotone"></span>
-                        </div>
-                        <div class="flex-1">
-                            <h3 class="font-bold text-lg text-white mb-1">Kitchen Helper</h3>
-                            <p class="text-xs text-slate-400 mb-2 italic">Commis / Kitchen Assistant</p>
-                            <p class="text-sm text-slate-400 leading-relaxed">The support system of the entire kitchen. Cleans, watches over ingredients, helps with prep, and ensures smooth operations.</p>
-                            <div class="mt-3 flex gap-2 flex-wrap">
-                                <span class="text-[10px] bg-slate-400/10 text-slate-400 px-2 py-1 rounded-full">🧹 Cleaning</span>
-                                <span class="text-[10px] bg-slate-400/10 text-slate-400 px-2 py-1 rounded-full">🔪 Prep Work</span>
-                                <span class="text-[10px] bg-slate-400/10 text-slate-400 px-2 py-1 rounded-full">📦 Stocking</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <div class="chef-card glass rounded-2xl p-6 card-shine glass-hover transition-all duration-300 cursor-pointer" style="border:1px solid rgba(251,191,36,0.15)" onclick="openChefModal('executive')"><div class="flex items-start gap-4"><div class="chef-icon w-16 h-16 rounded-2xl gold-bg flex items-center justify-center shrink-0 transition-all duration-300"><span class="iconify text-black text-3xl" data-icon="solar:crown-bold-duotone"></span></div><div class="flex-1"><div class="flex items-center gap-2 mb-1"><h3 class="font-bold text-lg text-white">Executive Chef</h3><span class="text-[10px] gold-bg text-black font-bold px-2 py-0.5 rounded-full">TOP</span></div><p class="text-xs text-amber-400 mb-2 italic">Chef de Cuisine / Head Chef</p><p class="text-sm text-slate-400 leading-relaxed">The highest-ranking leader of the entire kitchen. Plans the menu, maintains quality, and manages all chefs and staff.</p><div class="mt-3 flex gap-2 flex-wrap"><span class="text-[10px] bg-amber-400/10 text-amber-400 px-2 py-1 rounded-full">📋 Menu Planning</span><span class="text-[10px] bg-amber-400/10 text-amber-400 px-2 py-1 rounded-full">👨‍💼 Management</span><span class="text-[10px] bg-amber-400/10 text-amber-400 px-2 py-1 rounded-full">✅ Quality Control</span></div></div></div></div>
+                <div class="chef-card glass rounded-2xl p-6 card-shine glass-hover transition-all duration-300 cursor-pointer" style="border:1px solid rgba(251,191,36,0.15)" onclick="openChefModal('sous')"><div class="flex items-start gap-4"><div class="chef-icon w-16 h-16 rounded-2xl bg-amber-400/20 flex items-center justify-center shrink-0 transition-all duration-300"><span class="iconify text-amber-400 text-3xl" data-icon="solar:shield-star-bold-duotone"></span></div><div class="flex-1"><div class="flex items-center gap-2 mb-1"><h3 class="font-bold text-lg text-white">Sous Chef</h3><span class="text-[10px] bg-amber-400/20 text-amber-400 font-bold px-2 py-0.5 rounded-full">2IC</span></div><p class="text-xs text-amber-400 mb-2 italic">Second-in-Command / Under Chef</p><p class="text-sm text-slate-400 leading-relaxed">The second-in-command. Fills in for the Executive Chef when absent. Provides direction and assists all stations.</p><div class="mt-3 flex gap-2 flex-wrap"><span class="text-[10px] bg-amber-400/10 text-amber-400 px-2 py-1 rounded-full">🔄 Deputizing</span><span class="text-[10px] bg-amber-400/10 text-amber-400 px-2 py-1 rounded-full">📋 Supervision</span><span class="text-[10px] bg-amber-400/10 text-amber-400 px-2 py-1 rounded-full">🤝 Coordination</span></div></div></div></div>
+                <div class="chef-card glass rounded-2xl p-6 card-shine glass-hover transition-all duration-300 cursor-pointer" style="border:1px solid rgba(248,113,113,0.15)" onclick="openChefModal('sauce')"><div class="flex items-start gap-4"><div class="chef-icon w-16 h-16 rounded-2xl bg-red-400/15 flex items-center justify-center shrink-0 transition-all duration-300"><span class="iconify text-red-400 text-3xl" data-icon="solar:jar-of-pills-2-bold-duotone"></span></div><div class="flex-1"><h3 class="font-bold text-lg text-white mb-1">Sauce Chef</h3><p class="text-xs text-red-400 mb-2 italic">Saucier / Chef Saucier</p><p class="text-sm text-slate-400 leading-relaxed">The specialist in making sauces, soups, and gravies. One of the most important chefs because sauce gives life to every dish.</p><div class="mt-3 flex gap-2 flex-wrap"><span class="text-[10px] bg-red-400/10 text-red-400 px-2 py-1 rounded-full">🫙 Sauces</span><span class="text-[10px] bg-red-400/10 text-red-400 px-2 py-1 rounded-full">🍲 Soups</span><span class="text-[10px] bg-red-400/10 text-red-400 px-2 py-1 rounded-full">🥘 Gravies</span></div></div></div></div>
+                <div class="chef-card glass rounded-2xl p-6 card-shine glass-hover transition-all duration-300 cursor-pointer" style="border:1px solid rgba(251,146,60,0.15)" onclick="openChefModal('grilled')"><div class="flex items-start gap-4"><div class="chef-icon w-16 h-16 rounded-2xl bg-orange-400/15 flex items-center justify-center shrink-0 transition-all duration-300"><span class="iconify text-orange-400 text-3xl" data-icon="solar:fire-bold-duotone"></span></div><div class="flex-1"><h3 class="font-bold text-lg text-white mb-1">Grilled Chef</h3><p class="text-xs text-orange-400 mb-2 italic">Grillardin / Chef Grillardin</p><p class="text-sm text-slate-400 leading-relaxed">The expert in grilling meat, fish, and vegetables. Maintains proper temperature and doneness for every grilled item.</p><div class="mt-3 flex gap-2 flex-wrap"><span class="text-[10px] bg-orange-400/10 text-orange-400 px-2 py-1 rounded-full">🥩 Grilling</span><span class="text-[10px] bg-orange-400/10 text-orange-400 px-2 py-1 rounded-full">🔥 Roasting</span><span class="text-[10px] bg-orange-400/10 text-orange-400 px-2 py-1 rounded-full">🌡️ Temperature</span></div></div></div></div>
+                <div class="chef-card glass rounded-2xl p-6 card-shine glass-hover transition-all duration-300 cursor-pointer" style="border:1px solid rgba(96,165,250,0.15)" onclick="openChefModal('cold')"><div class="flex items-start gap-4"><div class="chef-icon w-16 h-16 rounded-2xl bg-blue-400/15 flex items-center justify-center shrink-0 transition-all duration-300"><span class="iconify text-blue-400 text-3xl" data-icon="solar:snowflake-bold-duotone"></span></div><div class="flex-1"><h3 class="font-bold text-lg text-white mb-1">Cold Kitchen Chef</h3><p class="text-xs text-blue-400 mb-2 italic">Garde Manger / Chef Garde Manger</p><p class="text-sm text-slate-400 leading-relaxed">In charge of the entire cold kitchen department. Makes salads, appetizers, cold cuts, and all cold food items.</p><div class="mt-3 flex gap-2 flex-wrap"><span class="text-[10px] bg-blue-400/10 text-blue-400 px-2 py-1 rounded-full">🥗 Salads</span><span class="text-[10px] bg-blue-400/10 text-blue-400 px-2 py-1 rounded-full">🧊 Cold Prep</span><span class="text-[10px] bg-blue-400/10 text-blue-400 px-2 py-1 rounded-full">🍖 Charcuterie</span></div></div></div></div>
+                <div class="chef-card glass rounded-2xl p-6 card-shine glass-hover transition-all duration-300 cursor-pointer" style="border:1px solid rgba(236,72,153,0.15)" onclick="openChefModal('pastry')"><div class="flex items-start gap-4"><div class="chef-icon w-16 h-16 rounded-2xl bg-pink-400/15 flex items-center justify-center shrink-0 transition-all duration-300"><span class="iconify text-pink-400 text-3xl" data-icon="solar:donut-bold-duotone"></span></div><div class="flex-1"><h3 class="font-bold text-lg text-white mb-1">Pastry Chef</h3><p class="text-xs text-pink-400 mb-2 italic">Pâtissier / Chef Pâtissier</p><p class="text-sm text-slate-400 leading-relaxed">The expert in making bread, cakes, pastries, and desserts. Requires skill in baking, decorating, and balancing flavors.</p><div class="mt-3 flex gap-2 flex-wrap"><span class="text-[10px] bg-pink-400/10 text-pink-400 px-2 py-1 rounded-full">🍞 Baking</span><span class="text-[10px] bg-pink-400/10 text-pink-400 px-2 py-1 rounded-full">🎂 Pastry</span><span class="text-[10px] bg-pink-400/10 text-pink-400 px-2 py-1 rounded-full">🍮 Desserts</span></div></div></div></div>
+                <div class="chef-card glass rounded-2xl p-6 card-shine glass-hover transition-all duration-300 cursor-pointer" style="border:1px solid rgba(34,211,238,0.15)" onclick="openChefModal('fish')"><div class="flex items-start gap-4"><div class="chef-icon w-16 h-16 rounded-2xl bg-cyan-400/15 flex items-center justify-center shrink-0 transition-all duration-300"><span class="iconify text-cyan-400 text-3xl" data-icon="solar:swimming-bold-duotone"></span></div><div class="flex-1"><h3 class="font-bold text-lg text-white mb-1">Fish Chef</h3><p class="text-xs text-cyan-400 mb-2 italic">Poissonnier / Chef Poissonnier</p><p class="text-sm text-slate-400 leading-relaxed">The specialist in preparing and cooking fish and seafood. Skilled in filleting, scaling, and cooking fish in various methods.</p><div class="mt-3 flex gap-2 flex-wrap"><span class="text-[10px] bg-cyan-400/10 text-cyan-400 px-2 py-1 rounded-full">🐟 Fish Prep</span><span class="text-[10px] bg-cyan-400/10 text-cyan-400 px-2 py-1 rounded-full">🦐 Seafood</span><span class="text-[10px] bg-cyan-400/10 text-cyan-400 px-2 py-1 rounded-full">🔪 Filleting</span></div></div></div></div>
+                <div class="chef-card glass rounded-2xl p-6 card-shine glass-hover transition-all duration-300 cursor-pointer" style="border:1px solid rgba(148,163,184,0.15)" onclick="openChefModal('helper')"><div class="flex items-start gap-4"><div class="chef-icon w-16 h-16 rounded-2xl bg-slate-400/15 flex items-center justify-center shrink-0 transition-all duration-300"><span class="iconify text-slate-400 text-3xl" data-icon="solar:hand-shake-bold-duotone"></span></div><div class="flex-1"><h3 class="font-bold text-lg text-white mb-1">Kitchen Helper</h3><p class="text-xs text-slate-400 mb-2 italic">Commis / Kitchen Assistant</p><p class="text-sm text-slate-400 leading-relaxed">The support system of the entire kitchen. Cleans, watches over ingredients, helps with prep, and ensures smooth operations.</p><div class="mt-3 flex gap-2 flex-wrap"><span class="text-[10px] bg-slate-400/10 text-slate-400 px-2 py-1 rounded-full">🧹 Cleaning</span><span class="text-[10px] bg-slate-400/10 text-slate-400 px-2 py-1 rounded-full">🔪 Prep Work</span><span class="text-[10px] bg-slate-400/10 text-slate-400 px-2 py-1 rounded-full">📦 Stocking</span></div></div></div></div>
             </div>
         </div>
     </section>
 
-    <!-- ==================== QUIZ ==================== -->
+    <!-- QUIZ -->
     <section id="quiz" class="relative py-24 section-hidden">
         <div class="max-w-3xl mx-auto px-6">
             <div class="text-center mb-16">
-                <div class="inline-flex items-center gap-2 glass rounded-full px-4 py-2 mb-4 gold-border" style="border:1px solid rgba(251,191,36,0.2)">
-                    <span class="iconify text-amber-400" data-icon="solar:diploma-verified-bold-duotone"></span>
-                    <span class="text-xs text-amber-400 tracking-wider uppercase">Test</span>
-                </div>
-                <h2 class="font-playfair text-3xl md:text-4xl font-bold mb-4">
-                    Test Your <span class="gold-gradient">Knowledge</span>
-                </h2>
+                <div class="inline-flex items-center gap-2 glass rounded-full px-4 py-2 mb-4 gold-border" style="border:1px solid rgba(251,191,36,0.2)"><span class="iconify text-amber-400" data-icon="solar:diploma-verified-bold-duotone"></span><span class="text-xs text-amber-400 tracking-wider uppercase">Test</span></div>
+                <h2 class="font-playfair text-3xl md:text-4xl font-bold mb-4">Test Your <span class="gold-gradient">Knowledge</span></h2>
                 <p class="text-slate-400">Quiz about Cold & Hot Kitchen and Chef Roles!</p>
             </div>
-
             <div id="quizContainer" class="glass rounded-2xl p-8"></div>
         </div>
     </section>
 
-    <!-- ==================== FOOTER ==================== -->
+    <!-- FOOTER -->
     <footer class="relative py-12 border-t border-white/5">
         <div class="max-w-7xl mx-auto px-6">
             <div class="flex flex-col items-center gap-6">
                 <div class="flex items-center gap-3">
                     <img src="https://z-cdn-media.chatglm.cn/files/c4d25cf6-95e6-4ffb-855c-5a49be0569e3.jpg?auth_key=1881512784-a706d6f2bbe046d6b8d4e9b4703c53bb-0-3bc2e23740518d82c457efaf7290f646" alt="9-Topaz" class="w-12 h-12 rounded-full object-cover ring-2 ring-amber-400/30">
-                    <div>
-                        <span class="font-bold text-amber-400 text-xl">9-TOPAZ</span>
-                        <p class="text-xs text-slate-500">TLE — Commercial Cooking</p>
-                    </div>
+                    <div><span class="font-bold text-amber-400 text-xl">9-TOPAZ</span><p class="text-xs text-slate-500">TLE — Commercial Cooking</p></div>
                 </div>
-
                 <div class="flex flex-wrap justify-center gap-6 text-center">
-                    <div class="glass rounded-xl px-5 py-3">
-                        <p class="text-[10px] text-slate-600 uppercase tracking-wider mb-1">Adviser</p>
-                        <p class="text-sm font-semibold text-amber-400">Ma'am Marie Fegalan</p>
-                    </div>
-                    <div class="glass rounded-xl px-5 py-3">
-                        <p class="text-[10px] text-slate-600 uppercase tracking-wider mb-1">Website Created By</p>
-                        <p class="text-sm font-semibold text-cyan-400">Kian V</p>
-                    </div>
-                    <div class="glass rounded-xl px-5 py-3">
-                        <p class="text-[10px] text-slate-600 uppercase tracking-wider mb-1">Section</p>
-                        <p class="text-sm font-semibold text-white">Grade 9 — Topaz</p>
-                    </div>
+                    <div class="glass rounded-xl px-5 py-3"><p class="text-[10px] text-slate-600 uppercase tracking-wider mb-1">Adviser</p><p class="text-sm font-semibold text-amber-400">Ma'am Marie Fegalan</p></div>
+                    <div class="glass rounded-xl px-5 py-3"><p class="text-[10px] text-slate-600 uppercase tracking-wider mb-1">Website Created By</p><p class="text-sm font-semibold text-cyan-400">Kian V</p></div>
+                    <div class="glass rounded-xl px-5 py-3"><p class="text-[10px] text-slate-600 uppercase tracking-wider mb-1">Section</p><p class="text-sm font-semibold text-white">Grade 9 — Topaz</p></div>
                 </div>
-
                 <div class="flex items-center gap-6">
                     <a href="#home" class="text-xs text-slate-500 hover:text-amber-400 transition-colors">Home</a>
                     <a href="#cold" class="text-xs text-slate-500 hover:text-blue-400 transition-colors">Cold Kitchen</a>
@@ -856,385 +458,167 @@
                     <a href="#chefs" class="text-xs text-slate-500 hover:text-amber-400 transition-colors">Chefs</a>
                     <a href="#quiz" class="text-xs text-slate-500 hover:text-amber-400 transition-colors">Quiz</a>
                 </div>
-
                 <p class="text-[10px] text-slate-700">© 2025 9-Topaz • TLE Commercial Cooking • All rights reserved.</p>
             </div>
         </div>
     </footer>
 
-    <!-- ==================== CHEF DETAIL MODAL ==================== -->
+    </div><!-- end mainContent -->
+
+    <!-- CHEF DETAIL MODAL -->
     <div id="chefModal" class="modal-overlay fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
         <div class="modal-content glass rounded-2xl p-8 max-w-lg w-full max-h-[80vh] overflow-y-auto">
             <div class="flex items-center justify-between mb-6">
                 <h3 id="chefModalTitle" class="font-bold text-xl"></h3>
-                <button onclick="closeChefModal()" class="text-slate-400 hover:text-white transition-colors">
-                    <span class="iconify text-xl" data-icon="solar:close-circle-bold-duotone"></span>
-                </button>
+                <button onclick="closeChefModal()" class="text-slate-400 hover:text-white transition-colors"><span class="iconify text-xl" data-icon="solar:close-circle-bold-duotone"></span></button>
             </div>
             <div id="chefModalContent"></div>
         </div>
     </div>
 
-    <!-- ==================== JAVASCRIPT ==================== -->
     <script>
-        // Mobile Menu
-        document.getElementById('mobileMenuBtn').addEventListener('click', () => {
-            document.getElementById('mobileMenu').classList.toggle('hidden');
-        });
-        document.querySelectorAll('#mobileMenu a').forEach(link => {
-            link.addEventListener('click', () => document.getElementById('mobileMenu').classList.add('hidden'));
-        });
+    // ==================== LOGIN SYSTEM ====================
+    const CORRECT_PASSCODE = '4421topaz';
+    const passcodeInput = document.getElementById('passcodeInput');
+    const loginError = document.getElementById('loginError');
 
-        // Scroll Animation
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) entry.target.classList.add('section-visible');
-            });
-        }, { threshold: 0.08 });
-        document.querySelectorAll('.section-hidden').forEach(el => observer.observe(el));
+    // Lock body scroll until unlocked
+    document.body.style.overflow = 'hidden';
 
-        // Smooth scrolling
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function(e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            });
-        });
+    // Auto-focus the input
+    passcodeInput.focus();
 
-        // Chef Modal Data
-        const chefData = {
-            executive: {
-                title: '👨‍🍳 Executive Chef',
-                content: `
-                    <div class="space-y-4">
-                        <div class="bg-amber-400/5 border border-amber-400/10 rounded-xl p-5">
-                            <h4 class="text-sm font-bold text-amber-400 mb-2">Definition</h4>
-                            <p class="text-sm text-slate-300 leading-relaxed">The <strong class="text-amber-300">Executive Chef</strong> (Chef de Cuisine) is the highest-ranking leader of the entire kitchen. They make all final decisions—on menus, food quality, budgeting, hiring and firing of staff, and overall kitchen operations.</p>
-                        </div>
-                        <div class="bg-amber-400/5 border border-amber-400/10 rounded-xl p-5">
-                            <h4 class="text-sm font-bold text-amber-400 mb-2">Responsibilities</h4>
-                            <ul class="space-y-2 text-sm text-slate-300">
-                                <li class="flex gap-2"><span class="text-amber-400">✦</span> Planning and creating the menu</li>
-                                <li class="flex gap-2"><span class="text-amber-400">✦</span> Monitoring the quality of every dish</li>
-                                <li class="flex gap-2"><span class="text-amber-400">✦</span> Managing the budget and expenses</li>
-                                <li class="flex gap-2"><span class="text-amber-400">✦</span> Recruiting and training kitchen staff</li>
-                                <li class="flex gap-2"><span class="text-amber-400">✦</span> Coordinating with management and suppliers</li>
-                                <li class="flex gap-2"><span class="text-amber-400">✦</span> Ensuring compliance with health & safety standards</li>
-                            </ul>
-                        </div>
-                        <div class="bg-amber-400/5 border border-amber-400/10 rounded-xl p-5">
-                            <h4 class="text-sm font-bold text-amber-400 mb-2">Key Skills Required</h4>
-                            <div class="flex gap-2 flex-wrap">
-                                <span class="text-[10px] bg-amber-400/10 text-amber-400 px-2 py-1 rounded-full">Leadership</span>
-                                <span class="text-[10px] bg-amber-400/10 text-amber-400 px-2 py-1 rounded-full">Creativity</span>
-                                <span class="text-[10px] bg-amber-400/10 text-amber-400 px-2 py-1 rounded-full">Business Acumen</span>
-                                <span class="text-[10px] bg-amber-400/10 text-amber-400 px-2 py-1 rounded-full">Communication</span>
-                                <span class="text-[10px] bg-amber-400/10 text-amber-400 px-2 py-1 rounded-full">Time Management</span>
-                            </div>
-                        </div>
-                    </div>
-                `
-            },
-            sous: {
-                title: '🥈 Sous Chef',
-                content: `
-                    <div class="space-y-4">
-                        <div class="bg-amber-400/5 border border-amber-400/10 rounded-xl p-5">
-                            <h4 class="text-sm font-bold text-amber-400 mb-2">Definition</h4>
-                            <p class="text-sm text-slate-300 leading-relaxed">The <strong class="text-amber-300">Sous Chef</strong> (French: "under chef") is the second-in-command. They are the right hand of the Executive Chef and take charge of the kitchen when the Executive Chef is absent. They serve as the bridge between management and the line cooks.</p>
-                        </div>
-                        <div class="bg-amber-400/5 border border-amber-400/10 rounded-xl p-5">
-                            <h4 class="text-sm font-bold text-amber-400 mb-2">Responsibilities</h4>
-                            <ul class="space-y-2 text-sm text-slate-300">
-                                <li class="flex gap-2"><span class="text-amber-400">✦</span> Leading day-to-day kitchen operations</li>
-                                <li class="flex gap-2"><span class="text-amber-400">✦</span> Supervising all cooking stations</li>
-                                <li class="flex gap-2"><span class="text-amber-400">✦</span> Training and coaching junior chefs</li>
-                                <li class="flex gap-2"><span class="text-amber-400">✦</span> Checking inventory and ordering ingredients</li>
-                                <li class="flex gap-2"><span class="text-amber-400">✦</span> Ensuring food is served on time</li>
-                            </ul>
-                        </div>
-                    </div>
-                `
-            },
-            sauce: {
-                title: '🫙 Sauce Chef (Saucier)',
-                content: `
-                    <div class="space-y-4">
-                        <div class="bg-red-400/5 border border-red-400/10 rounded-xl p-5">
-                            <h4 class="text-sm font-bold text-red-400 mb-2">Definition</h4>
-                            <p class="text-sm text-slate-300 leading-relaxed">The <strong class="text-red-300">Sauce Chef</strong> or <strong class="text-red-300">Saucier</strong> is the specialist in making sauces, soups, and gravies. In the French brigade system, they are considered the most respected line chef because sauce is regarded as the "soul" of French cuisine.</p>
-                        </div>
-                        <div class="bg-red-400/5 border border-red-400/10 rounded-xl p-5">
-                            <h4 class="text-sm font-bold text-red-400 mb-2">Responsibilities</h4>
-                            <ul class="space-y-2 text-sm text-slate-300">
-                                <li class="flex gap-2"><span class="text-red-400">✦</span> Making all sauces (hollandaise, béchamel, velouté, etc.)</li>
-                                <li class="flex gap-2"><span class="text-red-400">✦</span> Preparing soups and consommés</li>
-                                <li class="flex gap-2"><span class="text-red-400">✦</span> Making gravies and pan sauces</li>
-                                <li class="flex gap-2"><span class="text-red-400">✦</span> Balancing flavors and consistency</li>
-                                <li class="flex gap-2"><span class="text-red-400">✦</span> Maintaining the "mother sauces"</li>
-                            </ul>
-                        </div>
-                        <div class="bg-red-400/5 border border-red-400/10 rounded-xl p-5">
-                            <h4 class="text-sm font-bold text-red-400 mb-2">The 5 French Mother Sauces</h4>
-                            <div class="grid grid-cols-2 gap-2">
-                                <span class="text-xs bg-red-400/10 text-red-400 px-3 py-2 rounded-lg text-center">🥛 Béchamel</span>
-                                <span class="text-xs bg-red-400/10 text-red-400 px-3 py-2 rounded-lg text-center">🍗 Velouté</span>
-                                <span class="text-xs bg-red-400/10 text-red-400 px-3 py-2 rounded-lg text-center">🍅 Espagnole</span>
-                                <span class="text-xs bg-red-400/10 text-red-400 px-3 py-2 rounded-lg text-center">🧈 Hollandaise</span>
-                                <span class="text-xs bg-red-400/10 text-red-400 px-3 py-2 rounded-lg text-center col-span-2">🍅 Tomato Sauce</span>
-                            </div>
-                        </div>
-                    </div>
-                `
-            },
-            grilled: {
-                title: '🔥 Grilled Chef (Grillardin)',
-                content: `
-                    <div class="space-y-4">
-                        <div class="bg-orange-400/5 border border-orange-400/10 rounded-xl p-5">
-                            <h4 class="text-sm font-bold text-orange-400 mb-2">Definition</h4>
-                            <p class="text-sm text-slate-300 leading-relaxed">The <strong class="text-orange-300">Grilled Chef</strong> or <strong class="text-orange-300">Grillardin</strong> is the specialist in grilling. They prepare steaks, chops, burgers, and grilled vegetables. This role requires skill in fire control and identifying proper doneness.</p>
-                        </div>
-                        <div class="bg-orange-400/5 border border-orange-400/10 rounded-xl p-5">
-                            <h4 class="text-sm font-bold text-orange-400 mb-2">Responsibilities</h4>
-                            <ul class="space-y-2 text-sm text-slate-300">
-                                <li class="flex gap-2"><span class="text-orange-400">✦</span> Grilling meat, chicken, and fish</li>
-                                <li class="flex gap-2"><span class="text-orange-400">✦</span> Controlling grill temperature</li>
-                                <li class="flex gap-2"><span class="text-orange-400">✦</span> Identifying doneness (rare, medium, well-done)</li>
-                                <li class="flex gap-2"><span class="text-orange-400">✦</span> Preparing marinades and rubs</li>
-                                <li class="flex gap-2"><span class="text-orange-400">✦</span> Ensuring food safety while grilling</li>
-                            </ul>
-                        </div>
-                    </div>
-                `
-            },
-            cold: {
-                title: '❄️ Cold Kitchen Chef (Garde Manger)',
-                content: `
-                    <div class="space-y-4">
-                        <div class="bg-blue-400/5 border border-blue-400/10 rounded-xl p-5">
-                            <h4 class="text-sm font-bold text-blue-400 mb-2">Definition</h4>
-                            <p class="text-sm text-slate-300 leading-relaxed">The <strong class="text-blue-300">Cold Kitchen Chef</strong> or <strong class="text-blue-300">Garde Manger</strong> (French: "keeper of the food") is in charge of all cold food preparation. They prepare salads, appetizers, cold cuts, pâtés, cheese, and buffet presentations.</p>
-                        </div>
-                        <div class="bg-blue-400/5 border border-blue-400/10 rounded-xl p-5">
-                            <h4 class="text-sm font-bold text-blue-400 mb-2">Responsibilities</h4>
-                            <ul class="space-y-2 text-sm text-slate-300">
-                                <li class="flex gap-2"><span class="text-blue-400">✦</span> Preparing all cold appetizers</li>
-                                <li class="flex gap-2"><span class="text-blue-400">✦</span> Making salads and dressings</li>
-                                <li class="flex gap-2"><span class="text-blue-400">✦</span> Creating charcuterie and pâtés</li>
-                                <li class="flex gap-2"><span class="text-blue-400">✦</span> Setting up buffets and food displays</li>
-                                <li class="flex gap-2"><span class="text-blue-400">✦</span> Maintaining temperature and freshness</li>
-                            </ul>
-                        </div>
-                    </div>
-                `
-            },
-            pastry: {
-                title: '🎂 Pastry Chef (Pâtissier)',
-                content: `
-                    <div class="space-y-4">
-                        <div class="bg-pink-400/5 border border-pink-400/10 rounded-xl p-5">
-                            <h4 class="text-sm font-bold text-pink-400 mb-2">Definition</h4>
-                            <p class="text-sm text-slate-300 leading-relaxed">The <strong class="text-pink-300">Pastry Chef</strong> or <strong class="text-pink-300">Pâtissier</strong> is the expert in making bread, cakes, pastries, desserts, and other baked goods. This role requires precision, creativity, and great patience.</p>
-                        </div>
-                        <div class="bg-pink-400/5 border border-pink-400/10 rounded-xl p-5">
-                            <h4 class="text-sm font-bold text-pink-400 mb-2">Responsibilities</h4>
-                            <ul class="space-y-2 text-sm text-slate-300">
-                                <li class="flex gap-2"><span class="text-pink-400">✦</span> Making bread, cakes, and pastries</li>
-                                <li class="flex gap-2"><span class="text-pink-400">✦</span> Preparing the dessert menu</li>
-                                <li class="flex gap-2"><span class="text-pink-400">✦</span> Decorating cakes and pastries</li>
-                                <li class="flex gap-2"><span class="text-pink-400">✦</span> Balancing sweetness and flavor</li>
-                                <li class="flex gap-2"><span class="text-pink-400">✦</span> Maintaining proper baking temperatures</li>
-                            </ul>
-                        </div>
-                    </div>
-                `
-            },
-            fish: {
-                title: '🐟 Fish Chef (Poissonnier)',
-                content: `
-                    <div class="space-y-4">
-                        <div class="bg-cyan-400/5 border border-cyan-400/10 rounded-xl p-5">
-                            <h4 class="text-sm font-bold text-cyan-400 mb-2">Definition</h4>
-                            <p class="text-sm text-slate-300 leading-relaxed">The <strong class="text-cyan-300">Fish Chef</strong> or <strong class="text-cyan-300">Poissonnier</strong> is the specialist in preparing and cooking fish and seafood. They are skilled in filleting, scaling, and cooking fish using various methods—steaming, poaching, frying, and grilling.</p>
-                        </div>
-                        <div class="bg-cyan-400/5 border border-cyan-400/10 rounded-xl p-5">
-                            <h4 class="text-sm font-bold text-cyan-400 mb-2">Responsibilities</h4>
-                            <ul class="space-y-2 text-sm text-slate-300">
-                                <li class="flex gap-2"><span class="text-cyan-400">✦</span> Filleting and scaling fish</li>
-                                <li class="flex gap-2"><span class="text-cyan-400">✦</span> Preparing fish stock and bisque</li>
-                                <li class="flex gap-2"><span class="text-cyan-400">✦</span> Cooking fish using proper methods</li>
-                                <li class="flex gap-2"><span class="text-cyan-400">✦</span> Checking seafood freshness</li>
-                                <li class="flex gap-2"><span class="text-cyan-400">✦</span> Creating accompanying sauces</li>
-                            </ul>
-                        </div>
-                    </div>
-                `
-            },
-            helper: {
-                title: '🤝 Kitchen Helper (Commis)',
-                content: `
-                    <div class="space-y-4">
-                        <div class="bg-slate-400/5 border border-slate-400/10 rounded-xl p-5">
-                            <h4 class="text-sm font-bold text-slate-400 mb-2">Definition</h4>
-                            <p class="text-sm text-slate-300 leading-relaxed">The <strong class="text-slate-300">Kitchen Helper</strong> or <strong class="text-slate-300">Commis</strong> is the entry-level position in the kitchen. They serve as support for all chefs—cleaning, prepping, and assisting wherever needed. This is the first step toward becoming a professional chef.</p>
-                        </div>
-                        <div class="bg-slate-400/5 border border-slate-400/10 rounded-xl p-5">
-                            <h4 class="text-sm font-bold text-slate-400 mb-2">Responsibilities</h4>
-                            <ul class="space-y-2 text-sm text-slate-300">
-                                <li class="flex gap-2"><span class="text-slate-400">✦</span> Cleaning and sanitizing the kitchen</li>
-                                <li class="flex gap-2"><span class="text-slate-400">✦</span> Prepping ingredients (chopping, washing)</li>
-                                <li class="flex gap-2"><span class="text-slate-400">✦</span> Monitoring inventory and stock</li>
-                                <li class="flex gap-2"><span class="text-slate-400">✦</span> Assisting senior chefs</li>
-                                <li class="flex gap-2"><span class="text-slate-400">✦</span> Following health and safety protocols</li>
-                            </ul>
-                        </div>
-                        <div class="bg-emerald-400/5 border border-emerald-400/10 rounded-xl p-5">
-                            <h4 class="text-sm font-bold text-emerald-400 mb-2">💡 Why Is This Role Important?</h4>
-                            <p class="text-sm text-slate-300 leading-relaxed">Even though it may seem like a simple job, the kitchen helper is the backbone of the kitchen. No kitchen can run smoothly without a good helper. Many famous chefs started as commis.</p>
-                        </div>
-                    </div>
-                `
-            }
-        };
-
-        function openChefModal(key) {
-            const data = chefData[key];
-            document.getElementById('chefModalTitle').textContent = data.title;
-            document.getElementById('chefModalContent').innerHTML = data.content;
-            document.getElementById('chefModal').classList.add('active');
+    function togglePasscodeVisibility() {
+        const input = document.getElementById('passcodeInput');
+        const icon = document.getElementById('toggleVisibility').querySelector('.iconify');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.setAttribute('data-icon', 'solar:eye-closed-bold-duotone');
+        } else {
+            input.type = 'password';
+            icon.setAttribute('data-icon', 'solar:eye-bold-duotone');
         }
+    }
 
-        function closeChefModal() {
-            document.getElementById('chefModal').classList.remove('active');
+    function submitPasscode() {
+        const entered = passcodeInput.value.trim();
+        if (entered === CORRECT_PASSCODE) {
+            // Success - unlock
+            document.getElementById('loginGate').classList.add('unlocked');
+            document.getElementById('mainContent').classList.add('revealed');
+            document.body.style.overflow = 'auto';
+        } else {
+            // Error - shake input
+            passcodeInput.classList.add('shake-error');
+            loginError.style.opacity = '1';
+            setTimeout(() => {
+                passcodeInput.classList.remove('shake-error');
+                passcodeInput.value = '';
+                passcodeInput.focus();
+            }, 800);
+            setTimeout(() => {
+                loginError.style.opacity = '0';
+            }, 3000);
         }
+    }
 
-        document.getElementById('chefModal').addEventListener('click', (e) => {
-            if (e.target === document.getElementById('chefModal')) closeChefModal();
+    // Enter key to submit
+    passcodeInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            submitPasscode();
+        } else {
+            // Clear error on typing
+            loginError.style.opacity = '0';
+            passcodeInput.classList.remove('shake-error');
+        }
+    });
+
+    // ==================== MAIN SITE JS ====================
+    document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+        document.getElementById('mobileMenu').classList.toggle('hidden');
+    });
+    document.querySelectorAll('#mobileMenu a').forEach(link => {
+        link.addEventListener('click', () => document.getElementById('mobileMenu').classList.add('hidden'));
+    });
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) entry.target.classList.add('section-visible');
         });
+    }, { threshold: 0.08 });
+    document.querySelectorAll('.section-hidden').forEach(el => observer.observe(el));
 
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') closeChefModal();
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
+    });
 
-        // Quiz System
-        const quizData = [
-            {
-                q: 'What is the title of the highest-ranking chef in the kitchen?',
-                opts: ['Sous Chef', 'Executive Chef', 'Pastry Chef', 'Kitchen Helper'],
-                ans: 1
-            },
-            {
-                q: 'Who is known as the "keeper of the food" in French?',
-                opts: ['Saucier', 'Grillardin', 'Garde Manger', 'Pâtissier'],
-                ans: 2
-            },
-            {
-                q: 'Which chef specializes in making sauces and soups?',
-                opts: ['Poissonnier', 'Saucier', 'Commis', 'Grillardin'],
-                ans: 1
-            },
-            {
-                q: 'Which food belongs to the Cold Kitchen?',
-                opts: ['Grilled Steak', 'Caesar Salad', 'Fried Chicken', 'Adobo'],
-                ans: 1
-            },
-            {
-                q: 'Who is the second-in-command in the kitchen?',
-                opts: ['Executive Chef', 'Commis', 'Sous Chef', 'Garde Manger'],
-                ans: 2
-            },
-            {
-                q: 'Which cooking method uses steam from boiling water?',
-                opts: ['Frying', 'Grilling', 'Steaming', 'Baking'],
-                ans: 2
-            },
-            {
-                q: 'Which chef is in charge of desserts and pastries?',
-                opts: ['Saucier', 'Pâtissier', 'Poissonnier', 'Grillardin'],
-                ans: 1
-            },
-            {
-                q: 'Which food belongs to the Hot Kitchen?',
-                opts: ['Coleslaw', 'Fruit Platter', 'Sinigang', 'Cold Cuts'],
-                ans: 2
-            },
-            {
-                q: 'What does "Commis" mean?',
-                opts: ['Head Chef', 'Kitchen Helper', 'Fish Expert', 'Grill Master'],
-                ans: 1
-            },
-            {
-                q: 'How many French Mother Sauces are there?',
-                opts: ['3', '4', '5', '6'],
-                ans: 2
-            }
-        ];
+    // Chef Modal Data
+    const chefData = {
+        executive: { title: '👨‍🍳 Executive Chef', content: `<div class="space-y-4"><div class="bg-amber-400/5 border border-amber-400/10 rounded-xl p-5"><h4 class="text-sm font-bold text-amber-400 mb-2">Definition</h4><p class="text-sm text-slate-300 leading-relaxed">The <strong class="text-amber-300">Executive Chef</strong> (Chef de Cuisine) is the highest-ranking leader of the entire kitchen. They make all final decisions—on menus, food quality, budgeting, hiring and firing of staff, and overall kitchen operations.</p></div><div class="bg-amber-400/5 border border-amber-400/10 rounded-xl p-5"><h4 class="text-sm font-bold text-amber-400 mb-2">Responsibilities</h4><ul class="space-y-2 text-sm text-slate-300"><li class="flex gap-2"><span class="text-amber-400">✦</span> Planning and creating the menu</li><li class="flex gap-2"><span class="text-amber-400">✦</span> Monitoring the quality of every dish</li><li class="flex gap-2"><span class="text-amber-400">✦</span> Managing the budget and expenses</li><li class="flex gap-2"><span class="text-amber-400">✦</span> Recruiting and training kitchen staff</li><li class="flex gap-2"><span class="text-amber-400">✦</span> Coordinating with management and suppliers</li><li class="flex gap-2"><span class="text-amber-400">✦</span> Ensuring compliance with health & safety standards</li></ul></div><div class="bg-amber-400/5 border border-amber-400/10 rounded-xl p-5"><h4 class="text-sm font-bold text-amber-400 mb-2">Key Skills Required</h4><div class="flex gap-2 flex-wrap"><span class="text-[10px] bg-amber-400/10 text-amber-400 px-2 py-1 rounded-full">Leadership</span><span class="text-[10px] bg-amber-400/10 text-amber-400 px-2 py-1 rounded-full">Creativity</span><span class="text-[10px] bg-amber-400/10 text-amber-400 px-2 py-1 rounded-full">Business Acumen</span><span class="text-[10px] bg-amber-400/10 text-amber-400 px-2 py-1 rounded-full">Communication</span><span class="text-[10px] bg-amber-400/10 text-amber-400 px-2 py-1 rounded-full">Time Management</span></div></div></div>` },
+        sous: { title: '🥈 Sous Chef', content: `<div class="space-y-4"><div class="bg-amber-400/5 border border-amber-400/10 rounded-xl p-5"><h4 class="text-sm font-bold text-amber-400 mb-2">Definition</h4><p class="text-sm text-slate-300 leading-relaxed">The <strong class="text-amber-300">Sous Chef</strong> (French: "under chef") is the second-in-command. They are the right hand of the Executive Chef and take charge of the kitchen when the Executive Chef is absent.</p></div><div class="bg-amber-400/5 border border-amber-400/10 rounded-xl p-5"><h4 class="text-sm font-bold text-amber-400 mb-2">Responsibilities</h4><ul class="space-y-2 text-sm text-slate-300"><li class="flex gap-2"><span class="text-amber-400">✦</span> Leading day-to-day kitchen operations</li><li class="flex gap-2"><span class="text-amber-400">✦</span> Supervising all cooking stations</li><li class="flex gap-2"><span class="text-amber-400">✦</span> Training and coaching junior chefs</li><li class="flex gap-2"><span class="text-amber-400">✦</span> Checking inventory and ordering ingredients</li><li class="flex gap-2"><span class="text-amber-400">✦</span> Ensuring food is served on time</li></ul></div></div>` },
+        sauce: { title: '🫙 Sauce Chef (Saucier)', content: `<div class="space-y-4"><div class="bg-red-400/5 border border-red-400/10 rounded-xl p-5"><h4 class="text-sm font-bold text-red-400 mb-2">Definition</h4><p class="text-sm text-slate-300 leading-relaxed">The <strong class="text-red-300">Sauce Chef</strong> or <strong class="text-red-300">Saucier</strong> is the specialist in making sauces, soups, and gravies. In the French brigade system, they are the most respected line chef because sauce is the "soul" of French cuisine.</p></div><div class="bg-red-400/5 border border-red-400/10 rounded-xl p-5"><h4 class="text-sm font-bold text-red-400 mb-2">The 5 French Mother Sauces</h4><div class="grid grid-cols-2 gap-2"><span class="text-xs bg-red-400/10 text-red-400 px-3 py-2 rounded-lg text-center">🥛 Béchamel</span><span class="text-xs bg-red-400/10 text-red-400 px-3 py-2 rounded-lg text-center">🍗 Velouté</span><span class="text-xs bg-red-400/10 text-red-400 px-3 py-2 rounded-lg text-center">🍅 Espagnole</span><span class="text-xs bg-red-400/10 text-red-400 px-3 py-2 rounded-lg text-center">🧈 Hollandaise</span><span class="text-xs bg-red-400/10 text-red-400 px-3 py-2 rounded-lg text-center col-span-2">🍅 Tomato Sauce</span></div></div></div>` },
+        grilled: { title: '🔥 Grilled Chef (Grillardin)', content: `<div class="space-y-4"><div class="bg-orange-400/5 border border-orange-400/10 rounded-xl p-5"><h4 class="text-sm font-bold text-orange-400 mb-2">Definition</h4><p class="text-sm text-slate-300 leading-relaxed">The <strong class="text-orange-300">Grilled Chef</strong> or <strong class="text-orange-300">Grillardin</strong> is the specialist in grilling. They prepare steaks, chops, burgers, and grilled vegetables. Requires skill in fire control and identifying proper doneness.</p></div><div class="bg-orange-400/5 border border-orange-400/10 rounded-xl p-5"><h4 class="text-sm font-bold text-orange-400 mb-2">Responsibilities</h4><ul class="space-y-2 text-sm text-slate-300"><li class="flex gap-2"><span class="text-orange-400">✦</span> Grilling meat, chicken, and fish</li><li class="flex gap-2"><span class="text-orange-400">✦</span> Controlling grill temperature</li><li class="flex gap-2"><span class="text-orange-400">✦</span> Identifying doneness (rare, medium, well-done)</li><li class="flex gap-2"><span class="text-orange-400">✦</span> Preparing marinades and rubs</li></ul></div></div>` },
+        cold: { title: '❄️ Cold Kitchen Chef (Garde Manger)', content: `<div class="space-y-4"><div class="bg-blue-400/5 border border-blue-400/10 rounded-xl p-5"><h4 class="text-sm font-bold text-blue-400 mb-2">Definition</h4><p class="text-sm text-slate-300 leading-relaxed">The <strong class="text-blue-300">Cold Kitchen Chef</strong> or <strong class="text-blue-300">Garde Manger</strong> (French: "keeper of the food") is in charge of all cold food preparation. They prepare salads, appetizers, cold cuts, pâtés, cheese, and buffet presentations.</p></div><div class="bg-blue-400/5 border border-blue-400/10 rounded-xl p-5"><h4 class="text-sm font-bold text-blue-400 mb-2">Responsibilities</h4><ul class="space-y-2 text-sm text-slate-300"><li class="flex gap-2"><span class="text-blue-400">✦</span> Preparing all cold appetizers</li><li class="flex gap-2"><span class="text-blue-400">✦</span> Making salads and dressings</li><li class="flex gap-2"><span class="text-blue-400">✦</span> Creating charcuterie and pâtés</li><li class="flex gap-2"><span class="text-blue-400">✦</span> Setting up buffets and food displays</li><li class="flex gap-2"><span class="text-blue-400">✦</span> Maintaining temperature and freshness</li></ul></div></div>` },
+        pastry: { title: '🎂 Pastry Chef (Pâtissier)', content: `<div class="space-y-4"><div class="bg-pink-400/5 border border-pink-400/10 rounded-xl p-5"><h4 class="text-sm font-bold text-pink-400 mb-2">Definition</h4><p class="text-sm text-slate-300 leading-relaxed">The <strong class="text-pink-300">Pastry Chef</strong> or <strong class="text-pink-300">Pâtissier</strong> is the expert in making bread, cakes, pastries, desserts, and other baked goods. This role requires precision, creativity, and great patience.</p></div><div class="bg-pink-400/5 border border-pink-400/10 rounded-xl p-5"><h4 class="text-sm font-bold text-pink-400 mb-2">Responsibilities</h4><ul class="space-y-2 text-sm text-slate-300"><li class="flex gap-2"><span class="text-pink-400">✦</span> Making bread, cakes, and pastries</li><li class="flex gap-2"><span class="text-pink-400">✦</span> Preparing the dessert menu</li><li class="flex gap-2"><span class="text-pink-400">✦</span> Decorating cakes and pastries</li><li class="flex gap-2"><span class="text-pink-400">✦</span> Balancing sweetness and flavor</li></ul></div></div>` },
+        fish: { title: '🐟 Fish Chef (Poissonnier)', content: `<div class="space-y-4"><div class="bg-cyan-400/5 border border-cyan-400/10 rounded-xl p-5"><h4 class="text-sm font-bold text-cyan-400 mb-2">Definition</h4><p class="text-sm text-slate-300 leading-relaxed">The <strong class="text-cyan-300">Fish Chef</strong> or <strong class="text-cyan-300">Poissonnier</strong> is the specialist in preparing and cooking fish and seafood. They are skilled in filleting, scaling, and cooking fish using various methods.</p></div><div class="bg-cyan-400/5 border border-cyan-400/10 rounded-xl p-5"><h4 class="text-sm font-bold text-cyan-400 mb-2">Responsibilities</h4><ul class="space-y-2 text-sm text-slate-300"><li class="flex gap-2"><span class="text-cyan-400">✦</span> Filleting and scaling fish</li><li class="flex gap-2"><span class="text-cyan-400">✦</span> Preparing fish stock and bisque</li><li class="flex gap-2"><span class="text-cyan-400">✦</span> Cooking fish using proper methods</li><li class="flex gap-2"><span class="text-cyan-400">✦</span> Checking seafood freshness</li></ul></div></div>` },
+        helper: { title: '🤝 Kitchen Helper (Commis)', content: `<div class="space-y-4"><div class="bg-slate-400/5 border border-slate-400/10 rounded-xl p-5"><h4 class="text-sm font-bold text-slate-400 mb-2">Definition</h4><p class="text-sm text-slate-300 leading-relaxed">The <strong class="text-slate-300">Kitchen Helper</strong> or <strong class="text-slate-300">Commis</strong> is the entry-level position in the kitchen. They serve as support for all chefs—cleaning, prepping, and assisting wherever needed. This is the first step toward becoming a professional chef.</p></div><div class="bg-slate-400/5 border border-slate-400/10 rounded-xl p-5"><h4 class="text-sm font-bold text-slate-400 mb-2">Responsibilities</h4><ul class="space-y-2 text-sm text-slate-300"><li class="flex gap-2"><span class="text-slate-400">✦</span> Cleaning and sanitizing the kitchen</li><li class="flex gap-2"><span class="text-slate-400">✦</span> Prepping ingredients (chopping, washing)</li><li class="flex gap-2"><span class="text-slate-400">✦</span> Monitoring inventory and stock</li><li class="flex gap-2"><span class="text-slate-400">✦</span> Assisting senior chefs</li></ul></div><div class="bg-emerald-400/5 border border-emerald-400/10 rounded-xl p-5"><h4 class="text-sm font-bold text-emerald-400 mb-2">💡 Why Is This Role Important?</h4><p class="text-sm text-slate-300 leading-relaxed">Even though it may seem like a simple job, the kitchen helper is the backbone of the kitchen. No kitchen can run smoothly without a good helper. Many famous chefs started as commis.</p></div></div>` }
+    };
 
-        let currentQ = 0, score = 0, answered = false;
+    function openChefModal(key) {
+        const data = chefData[key];
+        document.getElementById('chefModalTitle').textContent = data.title;
+        document.getElementById('chefModalContent').innerHTML = data.content;
+        document.getElementById('chefModal').classList.add('active');
+    }
+    function closeChefModal() { document.getElementById('chefModal').classList.remove('active'); }
+    document.getElementById('chefModal').addEventListener('click', (e) => { if (e.target === document.getElementById('chefModal')) closeChefModal(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeChefModal(); });
 
-        function renderQuiz() {
-            const container = document.getElementById('quizContainer');
-            if (currentQ >= quizData.length) {
-                const pct = Math.round((score / quizData.length) * 100);
-                let emoji = '🎉', msg = 'You are a Commercial Cooking expert!';
-                if (pct < 50) { emoji = '😔'; msg = 'You need more study. Try again!'; }
-                else if (pct < 80) { emoji = '👍'; msg = 'Great job! Almost there!'; }
-                container.innerHTML = `
-                    <div class="text-center py-8">
-                        <div class="text-6xl mb-4">${emoji}</div>
-                        <h3 class="font-bold text-2xl mb-2">${score} / ${quizData.length}</h3>
-                        <p class="text-amber-400 font-semibold mb-2">${pct}%</p>
-                        <p class="text-slate-400 text-sm mb-6">${msg}</p>
-                        <button onclick="resetQuiz()" class="gold-bg text-black font-semibold px-8 py-3 rounded-xl hover:opacity-90 transition-all">Try Again</button>
-                    </div>
-                `;
-                return;
-            }
-            const q = quizData[currentQ];
-            answered = false;
-            container.innerHTML = `
-                <div class="flex items-center justify-between mb-6">
-                    <span class="text-xs text-slate-500">Question ${currentQ + 1} of ${quizData.length}</span>
-                    <span class="text-xs text-amber-400 font-semibold">Score: ${score}</span>
-                </div>
-                <div class="w-full bg-white/5 rounded-full h-1.5 mb-8">
-                    <div class="gold-bg h-1.5 rounded-full transition-all duration-500" style="width:${(currentQ / quizData.length) * 100}%"></div>
-                </div>
-                <h3 class="font-bold text-lg mb-6 leading-relaxed">${q.q}</h3>
-                <div class="space-y-3" id="quizOpts">
-                    ${q.opts.map((o, i) => `
-                        <button onclick="checkAns(${i})" class="quiz-option w-full text-left glass rounded-xl px-5 py-3.5 text-sm text-slate-300 border border-white/10 transition-all flex items-center gap-3">
-                            <span class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-xs font-bold text-slate-500 shrink-0">${String.fromCharCode(65 + i)}</span>
-                            ${o}
-                        </button>
-                    `).join('')}
-                </div>
-            `;
+    // Quiz
+    const quizData = [
+        { q: 'What is the title of the highest-ranking chef in the kitchen?', opts: ['Sous Chef', 'Executive Chef', 'Pastry Chef', 'Kitchen Helper'], ans: 1 },
+        { q: 'Who is known as the "keeper of the food" in French?', opts: ['Saucier', 'Grillardin', 'Garde Manger', 'Pâtissier'], ans: 2 },
+        { q: 'Which chef specializes in making sauces and soups?', opts: ['Poissonnier', 'Saucier', 'Commis', 'Grillardin'], ans: 1 },
+        { q: 'Which food belongs to the Cold Kitchen?', opts: ['Grilled Steak', 'Caesar Salad', 'Fried Chicken', 'Adobo'], ans: 1 },
+        { q: 'Who is the second-in-command in the kitchen?', opts: ['Executive Chef', 'Commis', 'Sous Chef', 'Garde Manger'], ans: 2 },
+        { q: 'Which cooking method uses steam from boiling water?', opts: ['Frying', 'Grilling', 'Steaming', 'Baking'], ans: 2 },
+        { q: 'Which chef is in charge of desserts and pastries?', opts: ['Saucier', 'Pâtissier', 'Poissonnier', 'Grillardin'], ans: 1 },
+        { q: 'Which food belongs to the Hot Kitchen?', opts: ['Coleslaw', 'Fruit Platter', 'Sinigang', 'Cold Cuts'], ans: 2 },
+        { q: 'What does "Commis" mean?', opts: ['Head Chef', 'Kitchen Helper', 'Fish Expert', 'Grill Master'], ans: 1 },
+        { q: 'How many French Mother Sauces are there?', opts: ['3', '4', '5', '6'], ans: 2 }
+    ];
+    let currentQ = 0, score = 0, answered = false;
+
+    function renderQuiz() {
+        const container = document.getElementById('quizContainer');
+        if (currentQ >= quizData.length) {
+            const pct = Math.round((score / quizData.length) * 100);
+            let emoji = '🎉', msg = 'You are a Commercial Cooking expert!';
+            if (pct < 50) { emoji = '😔'; msg = 'You need more study. Try again!'; }
+            else if (pct < 80) { emoji = '👍'; msg = 'Great job! Almost there!'; }
+            container.innerHTML = `<div class="text-center py-8"><div class="text-6xl mb-4">${emoji}</div><h3 class="font-bold text-2xl mb-2">${score} / ${quizData.length}</h3><p class="text-amber-400 font-semibold mb-2">${pct}%</p><p class="text-slate-400 text-sm mb-6">${msg}</p><button onclick="resetQuiz()" class="gold-bg text-black font-semibold px-8 py-3 rounded-xl hover:opacity-90 transition-all">Try Again</button></div>`;
+            return;
         }
-
-        function checkAns(sel) {
-            if (answered) return;
-            answered = true;
-            const q = quizData[currentQ];
-            const opts = document.querySelectorAll('.quiz-option');
-            opts.forEach((opt, i) => {
-                opt.style.pointerEvents = 'none';
-                if (i === q.ans) {
-                    opt.style.borderColor = '#10b981';
-                    opt.style.background = 'rgba(16,185,129,0.1)';
-                } else if (i === sel && i !== q.ans) {
-                    opt.style.borderColor = '#ef4444';
-                    opt.style.background = 'rgba(239,68,68,0.1)';
-                }
-            });
-            if (sel === q.ans) score++;
-            setTimeout(() => { currentQ++; renderQuiz(); }, 1200);
-        }
-
-        function resetQuiz() { currentQ = 0; score = 0; renderQuiz(); }
-        renderQuiz();
+        const q = quizData[currentQ]; answered = false;
+        container.innerHTML = `<div class="flex items-center justify-between mb-6"><span class="text-xs text-slate-500">Question ${currentQ + 1} of ${quizData.length}</span><span class="text-xs text-amber-400 font-semibold">Score: ${score}</span></div><div class="w-full bg-white/5 rounded-full h-1.5 mb-8"><div class="gold-bg h-1.5 rounded-full transition-all duration-500" style="width:${(currentQ / quizData.length) * 100}%"></div></div><h3 class="font-bold text-lg mb-6 leading-relaxed">${q.q}</h3><div class="space-y-3" id="quizOpts">${q.opts.map((o, i) => `<button onclick="checkAns(${i})" class="quiz-option w-full text-left glass rounded-xl px-5 py-3.5 text-sm text-slate-300 border border-white/10 transition-all flex items-center gap-3"><span class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-xs font-bold text-slate-500 shrink-0">${String.fromCharCode(65 + i)}</span>${o}</button>`).join('')}</div>`;
+    }
+    function checkAns(sel) {
+        if (answered) return; answered = true;
+        const q = quizData[currentQ]; const opts = document.querySelectorAll('.quiz-option');
+        opts.forEach((opt, i) => {
+            opt.style.pointerEvents = 'none';
+            if (i === q.ans) { opt.style.borderColor = '#10b981'; opt.style.background = 'rgba(16,185,129,0.1)'; }
+            else if (i === sel && i !== q.ans) { opt.style.borderColor = '#ef4444'; opt.style.background = 'rgba(239,68,68,0.1)'; }
+        });
+        if (sel === q.ans) score++;
+        setTimeout(() => { currentQ++; renderQuiz(); }, 1200);
+    }
+    function resetQuiz() { currentQ = 0; score = 0; renderQuiz(); }
+    renderQuiz();
     </script>
 </body>
 </html>
